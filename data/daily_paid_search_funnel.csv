@@ -1,0 +1,6 @@
+date,channel,sessions,view_item_sessions,add_to_cart_sessions,begin_checkout_sessions,payment_attempt_sessions,payment_failed_sessions,orders
+2026-09-15,paid_search,1260,935,225,112,80,3,65
+2026-09-22,paid_search,1202,899,217,105,76,2,60
+2026-09-29,paid_search,1216,913,219,108,78,3,60
+2026-10-06,paid_search,1270,949,229,115,84,3,63
+2026-10-13,paid_search,1266,943,225,112,83,49,25

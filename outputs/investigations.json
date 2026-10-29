@@ -1,0 +1,81 @@
+{
+  "project": "Analytics Investigation Agent",
+  "release": "v0.1-baseline",
+  "dataset": "synthetic_demo",
+  "rows_analyzed": 210,
+  "alerts": [
+    {
+      "date": "2026-10-13",
+      "channel": "paid_search",
+      "anomaly_type": "conversion_rate_drop",
+      "severity": "high",
+      "observed_sessions": 1266,
+      "observed_orders": 25,
+      "observed_conversion_rate_pct": 1.97,
+      "baseline_conversion_rate_pct": 5.01,
+      "change_vs_baseline_pct": -60.6,
+      "expected_orders": 63.5,
+      "estimated_order_shortfall": 38.5,
+      "estimated_revenue_gap_eur": 5910.6,
+      "baseline_dates": [
+        "2026-10-06",
+        "2026-09-29",
+        "2026-09-22",
+        "2026-09-15"
+      ],
+      "investigation_checks": [
+        "Validate purchase event and transaction-ID completeness against backend orders.",
+        "Inspect checkout errors, conversion funnel and site changes during incident.",
+        "Compare landing-page and device-level conversion rates by campaign."
+      ],
+      "caution": "Statistical alert only. No root cause established; revenue gap is a scenario estimate."
+    },
+    {
+      "date": "2026-10-14",
+      "channel": "paid_search",
+      "anomaly_type": "conversion_rate_drop",
+      "severity": "high",
+      "observed_sessions": 1281,
+      "observed_orders": 26,
+      "observed_conversion_rate_pct": 2.03,
+      "baseline_conversion_rate_pct": 5.12,
+      "change_vs_baseline_pct": -60.34,
+      "expected_orders": 65.6,
+      "estimated_order_shortfall": 39.6,
+      "estimated_revenue_gap_eur": 6053.41,
+      "baseline_dates": [
+        "2026-10-07",
+        "2026-09-30",
+        "2026-09-23",
+        "2026-09-16"
+      ],
+      "investigation_checks": [
+        "Validate purchase event and transaction-ID completeness against backend orders.",
+        "Inspect checkout errors, conversion funnel and site changes during incident.",
+        "Compare landing-page and device-level conversion rates by campaign."
+      ],
+      "caution": "Statistical alert only. No root cause established; revenue gap is a scenario estimate."
+    },
+    {
+      "date": "2026-10-20",
+      "channel": "email",
+      "anomaly_type": "sessions_drop",
+      "severity": "high",
+      "observed_sessions": 160,
+      "baseline_sessions": 453.5,
+      "change_vs_baseline_pct": -64.72,
+      "baseline_dates": [
+        "2026-10-13",
+        "2026-10-06",
+        "2026-09-29",
+        "2026-09-22"
+      ],
+      "investigation_checks": [
+        "Check campaign schedules, email delivery or paid media spend changes.",
+        "Validate session_start tracking and consent configuration.",
+        "Compare channel attribution and referrer classification over time."
+      ],
+      "caution": "Statistical alert only. Traffic reduction might be real or measurement-related."
+    }
+  ]
+}

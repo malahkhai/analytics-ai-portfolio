@@ -1,0 +1,36 @@
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.venv/
+.pytest_cache/
+*.duckdb
+*.duckdb.wal
+credentials*.json
+*.pem
+.DS_Store
+
+# Python temporary files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# macOS and editor files
+.DS_Store
+.vscode/
+
+# API keys and environment configuration
+.env
+.env.*
+!.env.example
+
+# Private datasets and credentials
+data/private/
+credentials/
+*.pem
+
+# Temporary logs
+*.log
