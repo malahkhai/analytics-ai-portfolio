@@ -34,3 +34,11 @@ credentials/
 
 # Temporary logs
 *.log
+
+# dbt generated files
+logs/
+target/
+dbt_packages/
+dbt_internal_packages/
+query_log.sql
+.user.yml

@@ -1,0 +1,18 @@
+
+# Signal Investigator — dbt project
+
+name: signal_investigator_dbt
+version: '1.0.0'
+config-version: 2
+
+# Connection profile we'll configure next
+profile: signal_investigator_dbt
+
+# Where dbt should find our SQL models
+model-paths: ["models"]
+
+# How dbt should create our models
+models:
+  signal_investigator_dbt:
+    marts:
+      +materialized: view

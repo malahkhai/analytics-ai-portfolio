@@ -1,0 +1,44 @@
+
+version: 2
+
+models:
+  - name: fct_daily_ecommerce
+
+    description: >
+      Daily ecommerce performance metrics derived
+      from the Google GA4 public ecommerce dataset.
+      Covers December 1-7, 2020.
+
+    columns:
+
+      - name: event_day
+        description: "Date of ecommerce activity."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: sessions
+        description: >
+          Distinct identifiable GA4 sessions
+          for each event date.
+        data_tests:
+          - not_null
+
+      - name: purchase_events
+        description: "Number of purchase events."
+        data_tests:
+          - not_null
+
+      - name: purchasing_sessions
+        description: >
+          Number of distinct identifiable
+          sessions containing a purchase.
+        data_tests:
+          - not_null
+
+      - name: session_purchase_rate_pct
+        description: >
+          Percentage of identifiable sessions
+          containing at least one purchase.
+        data_tests:
+          - not_null
