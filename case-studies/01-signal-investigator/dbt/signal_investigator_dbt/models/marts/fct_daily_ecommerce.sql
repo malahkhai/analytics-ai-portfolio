@@ -2,7 +2,7 @@
 -- Signal Investigator
 -- Daily Ecommerce Performance Model
 -- Source: Google GA4 public ecommerce dataset
--- Period: December 1-7, 2020
+-- Period: November 1 - December 7, 2020
 
 {{ config(materialized='view') }}
 
@@ -24,7 +24,7 @@ WITH raw_events AS (
         `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
 
     WHERE
-        _TABLE_SUFFIX BETWEEN '20201201' AND '20201207'
+        _TABLE_SUFFIX BETWEEN '20201101' AND '20201207'
 
 ),
 

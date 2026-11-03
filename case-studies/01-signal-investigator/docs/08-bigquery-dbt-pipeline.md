@@ -21,7 +21,7 @@ Google's public GA4 ecommerce sample dataset:
 
 `bigquery-public-data.ga4_obfuscated_sample_ecommerce`
 
-Analysis period: December 1–7, 2020.
+Analysis period: November 1 – December 7, 2020.
 
 The public sample data is separate from the synthetic
 incident data used by the Python investigation engine.
