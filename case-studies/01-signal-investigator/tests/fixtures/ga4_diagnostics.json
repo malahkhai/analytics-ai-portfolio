@@ -1,0 +1,180 @@
+{
+  "project": "Signal Investigator",
+  "source": "GA4 public ecommerce sample",
+  "records_analyzed": 37,
+  "dates_evaluated": 9,
+  "qualifying_alerts": 0,
+  "evaluations": [
+    {
+      "date": "2020-11-29",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-22",
+        "2020-11-15",
+        "2020-11-08",
+        "2020-11-01"
+      ],
+      "observed_sessions": 3262,
+      "baseline_sessions": 2424.5,
+      "session_change_pct": 34.5,
+      "observed_purchase_rate_pct": 1.5,
+      "baseline_purchase_rate_pct": 0.97,
+      "purchase_rate_change_pct": 55.0,
+      "estimated_purchase_session_gap": -17.4,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    },
+    {
+      "date": "2020-11-30",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-23",
+        "2020-11-16",
+        "2020-11-09",
+        "2020-11-02"
+      ],
+      "observed_sessions": 4593,
+      "baseline_sessions": 3630.5,
+      "session_change_pct": 26.5,
+      "observed_purchase_rate_pct": 2.77,
+      "baseline_purchase_rate_pct": 1.47,
+      "purchase_rate_change_pct": 88.5,
+      "estimated_purchase_session_gap": -59.6,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    },
+    {
+      "date": "2020-12-01",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-24",
+        "2020-11-17",
+        "2020-11-10",
+        "2020-11-03"
+      ],
+      "observed_sessions": 5000,
+      "baseline_sessions": 4427.8,
+      "session_change_pct": 12.9,
+      "observed_purchase_rate_pct": 2.0,
+      "baseline_purchase_rate_pct": 1.65,
+      "purchase_rate_change_pct": 21.3,
+      "estimated_purchase_session_gap": -17.6,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    },
+    {
+      "date": "2020-12-02",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-25",
+        "2020-11-18",
+        "2020-11-11",
+        "2020-11-04"
+      ],
+      "observed_sessions": 4814,
+      "baseline_sessions": 4229,
+      "session_change_pct": 13.8,
+      "observed_purchase_rate_pct": 1.56,
+      "baseline_purchase_rate_pct": 1.35,
+      "purchase_rate_change_pct": 15.1,
+      "estimated_purchase_session_gap": -9.8,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    },
+    {
+      "date": "2020-12-03",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-26",
+        "2020-11-19",
+        "2020-11-12",
+        "2020-11-05"
+      ],
+      "observed_sessions": 5200,
+      "baseline_sessions": 3983.8,
+      "session_change_pct": 30.5,
+      "observed_purchase_rate_pct": 1.65,
+      "baseline_purchase_rate_pct": 1.1,
+      "purchase_rate_change_pct": 49.7,
+      "estimated_purchase_session_gap": -28.6,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    },
+    {
+      "date": "2020-12-04",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-27",
+        "2020-11-20",
+        "2020-11-13",
+        "2020-11-06"
+      ],
+      "observed_sessions": 4725,
+      "baseline_sessions": 3701.2,
+      "session_change_pct": 27.7,
+      "observed_purchase_rate_pct": 1.82,
+      "baseline_purchase_rate_pct": 1.83,
+      "purchase_rate_change_pct": -0.6,
+      "estimated_purchase_session_gap": 0.5,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    },
+    {
+      "date": "2020-12-05",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-28",
+        "2020-11-21",
+        "2020-11-14",
+        "2020-11-07"
+      ],
+      "observed_sessions": 3510,
+      "baseline_sessions": 2811.5,
+      "session_change_pct": 24.8,
+      "observed_purchase_rate_pct": 2.19,
+      "baseline_purchase_rate_pct": 1.48,
+      "purchase_rate_change_pct": 47.7,
+      "estimated_purchase_session_gap": -24.9,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    },
+    {
+      "date": "2020-12-06",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-29",
+        "2020-11-22",
+        "2020-11-15",
+        "2020-11-08"
+      ],
+      "observed_sessions": 3339,
+      "baseline_sessions": 2583.8,
+      "session_change_pct": 29.2,
+      "observed_purchase_rate_pct": 1.2,
+      "baseline_purchase_rate_pct": 1.26,
+      "purchase_rate_change_pct": -4.8,
+      "estimated_purchase_session_gap": 2.0,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    },
+    {
+      "date": "2020-12-07",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-30",
+        "2020-11-23",
+        "2020-11-16",
+        "2020-11-09"
+      ],
+      "observed_sessions": 5461,
+      "baseline_sessions": 3846,
+      "session_change_pct": 42.0,
+      "observed_purchase_rate_pct": 1.67,
+      "baseline_purchase_rate_pct": 1.95,
+      "purchase_rate_change_pct": -14.5,
+      "estimated_purchase_session_gap": 15.5,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "project": "Signal Investigator",
+  "model": "gemini-3.8-flash",
+  "source_evidence": {
+    "source": "GA4 public ecommerce sample",
+    "evidence": {
+      "date": "2020-12-07",
+      "scope": "all_channels_aggregated",
+      "baseline_dates": [
+        "2020-11-30",
+        "2020-11-23",
+        "2020-11-16",
+        "2020-11-09"
+      ],
+      "observed_sessions": 5461,
+      "baseline_sessions": 3846,
+      "session_change_pct": 42.0,
+      "observed_purchase_rate_pct": 1.67,
+      "baseline_purchase_rate_pct": 1.95,
+      "purchase_rate_change_pct": -14.5,
+      "estimated_purchase_session_gap": 15.5,
+      "alert_types": [],
+      "status": "no_qualifying_anomaly"
+    },
+    "alert_thresholds": {
+      "minimum_sessions": 150,
+      "minimum_purchase_session_gap": 15,
+      "minimum_relative_rate_drop_pct": 35
+    },
+    "alert_condition_results": {
+      "minimum_sessions_met": true,
+      "purchase_shortfall_met": true,
+      "rate_drop_threshold_met": false
+    },
+    "statistical_significance_test_performed": false
+  },
+  "ai_interpretation": {
+    "executive_summary": "On 2020-12-07, observed sessions increased by 42.0% relative to the 4-week baseline (5,461 vs. 3,846 sessions), while the purchase rate decreased relatively by 14.5% (from a baseline of 1.95% to 1.67%, representing a 0.28 percentage point decline). This rate contraction corresponds to an estimated shortfall of 15.5 purchase sessions relative to baseline rate expectations, while overall session volume expanded substantially.",
+    "why_no_alert": "An anomaly alert was not triggered because the alert rule requires all three threshold criteria to be satisfied simultaneously. Although the session volume exceeded the 150-session threshold and the estimated purchase session gap of 15.5 cleared the minimum shortfall requirement of 15, the relative purchase rate drop of -14.5% did not meet the required minimum relative rate drop threshold of 35%. Consequently, the status remains classified as no_qualifying_anomaly.",
+    "hypotheses": [
+      {
+        "title": "Top-of-funnel promotional traffic dilution",
+        "explanation": "A promotional campaign or external marketing push on 2020-12-07 may have introduced a surge of low-intent or exploratory visitors, increasing overall session volume by 42.0% while lowering the aggregate purchase session rate without an actual drop in baseline shopper intent.",
+        "data_needed": [
+          "Session volume broken down by acquisition source, medium, and campaign for the target date and baseline dates",
+          "Landing page session distribution across the evaluated dates",
+          "Purchase rate segmented by campaign and traffic source"
+        ],
+        "validation_check": "Compare channel- and campaign-level traffic growth rates against their respective purchase rate trends to determine if traffic increases were concentrated in channels exhibiting lower historical conversion rates."
+      },
+      {
+        "title": "Device or technical checkout friction",
+        "explanation": "Technical or usability defects introduced on specific device types or browser platforms could have impaired users' ability to reach purchase confirmation, dampening the purchase rate despite elevated traffic.",
+        "data_needed": [
+          "Device category, operating system, and browser platform session distributions",
+          "Purchase rates segmented by device and browser platform",
+          "Technical error or exception tracking logs corresponding to the date"
+        ],
+        "validation_check": "Evaluate platform-specific purchase rates to see if the decline is isolated to a specific device or browser cohort rather than distributed uniformly across all users."
+      },
+      {
+        "title": "Inventory stockouts or product availability constraints",
+        "explanation": "The 42.0% traffic influx may have led to product stockouts, shipping lead time disclaimers, or unfulfilled merchandise intent, causing prospective purchasers to exit prior to completing a purchase.",
+        "data_needed": [
+          "Product view and product detail page interaction counts",
+          "Cart addition metrics alongside inventory status records for highly trafficked items",
+          "Session-level progression between product view and purchase events"
+        ],
+        "validation_check": "Assess session progression between item detail views, cart actions, and purchases to determine whether drops occurred downstream of product views."
+      }
+    ],
+    "recommended_checks": [
+      {
+        "action": "Acquisition and campaign breakdown",
+        "purpose": "Identify which traffic sources drove the 42.0% increase in sessions and whether the rate drop was concentrated within specific incoming cohorts.",
+        "inputs_needed": [
+          "Sessions by source, medium, and campaign for 2020-12-07",
+          "Baseline sessions and purchase rates across matching acquisition dimensions"
+        ]
+      },
+      {
+        "action": "Technical and platform segmentation",
+        "purpose": "Determine whether the 14.5% relative drop in purchase rate was systemic or isolated to a specific operating system, browser, or device type.",
+        "inputs_needed": [
+          "Device category, browser, and operating system metrics for 2020-12-07 and baseline dates",
+          "Purchasing sessions grouped by platform attributes"
+        ]
+      },
+      {
+        "action": "Session-level funnel progression analysis",
+        "purpose": "Determine at which stage of the shopping flow users exited to distinguish intent shifts from mid-funnel friction.",
+        "inputs_needed": [
+          "Session-level event sequences including view_item, add_to_cart, begin_checkout, and purchase",
+          "Corresponding baseline funnel event distributions"
+        ]
+      }
+    ],
+    "limitations": [
+      "No statistical significance tests were performed, so it cannot be confirmed whether the observed rate decline deviates beyond expected random variance.",
+      "Data is aggregated across all channels, masking potential channel-specific, device-specific, or geographic divergences.",
+      "Purchasing sessions indicate sessions with purchase activity and cannot be treated as order counts, units, or revenue metrics.",
+      "The 15.5 purchase session gap is a mathematical estimate based on baseline conversion rates and cannot be interpreted as confirmed lost sales.",
+      "True funnel progression and drop-off identification cannot be verified without session-level behavioural paths."
+    ]
+  },
+  "validation": {
+    "schema_valid": true,
+    "required_item_counts_valid": true,
+    "factual_review_status": "pending"
+  }
+}
