@@ -1,4 +1,4 @@
-# Analytics & AI Engineering Portfolio
+# Analytics & AI Agents Portfolio
 
 Practical case studies connecting **digital analytics, business intelligence, analytics engineering, and applied AI** to business decisions.
 
