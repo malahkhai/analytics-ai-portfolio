@@ -1,5 +1,8 @@
 # Analytics & AI Agents Portfolio
 
+
+**[Explore the Live Maxim AI Dashboard](https://maxim-signal-investigator.streamlit.app/?window=all&date=2020-12-07)**
+
 Practical case studies connecting **digital analytics, business intelligence, analytics engineering, and applied AI** to business decisions.
 
 My work combines digital performance and ecommerce analytics with hands-on development of data products. Each case study documents the business question, data model, working implementation, evaluation, and limitations—not just a dashboard screenshot.

@@ -1,5 +1,8 @@
 # Signal Investigator
 
+
+**[Explore the Live Maxim AI Dashboard](https://maxim-signal-investigator.streamlit.app/?window=all&date=2020-12-07)**
+
 ### AI-assisted ecommerce anomaly investigation · Portfolio case study
 
 **Stack:** Google Analytics 4 public sample · BigQuery · dbt · Python · Gemini · Streamlit
