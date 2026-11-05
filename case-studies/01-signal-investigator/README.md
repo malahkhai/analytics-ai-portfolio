@@ -1,59 +1,132 @@
-# Signal Investigator — Analytics Investigation Agent (Portfolio Case Study)
+# Signal Investigator
 
-> **Stage 1 of 6 — v0.1 analytical baseline, not yet AI-powered.**
+### AI-assisted ecommerce anomaly investigation · Portfolio case study
 
-**What it does today:** analyses simulated daily ecommerce metrics and creates transparent, reproducible alerts when a channel's conversion rate or session volume declines markedly versus its four previous matching weekdays. Results include data-backed comparisons, dates and proposed verification checks; no causes are asserted.
+**Stack:** Google Analytics 4 public sample · BigQuery · dbt · Python · Gemini · Streamlit
+**Status:** Working investigation prototype and interview demonstration. Streamlit Cloud deployment pending.
 
-**What we will build:** GA4 → BigQuery → dbt → an evaluated detection service → a Gemini tool-calling agent → an interactive evidence-based demo, with Fivetran ingesting campaign spend from Google Sheets into the warehouse in a later stage.
+Signal Investigator helps an analyst answer a business question: **When ecommerce performance changes unexpectedly, what happened, how substantial is it, and what should the relevant business team investigate first?**
 
-## Try it locally (Python 3.10+; no pip installs needed)
+It combines auditable Python detection, tool-supported Gemini investigation, and **Maxim**, a stakeholder-facing executive report. It does **not** assert unverified root causes or treat estimated purchasing-session gaps as confirmed lost sales.
 
-```bash
-python -m src.generate_data
-python -m src.detect
-python -m unittest discover -s tests -v
+<!-- Replace this line once Streamlit is deployed. -->
+**Live Maxim dashboard:** Link to be added after deployment.
+
+## The workflow
+
+```text
+Google public GA4 ecommerce sample
+             ↓
+BigQuery + dbt → fct_daily_ecommerce
+             ↓
+Python BigQuery reader → GA4 adapter → deterministic anomaly detector
+             ↓
+GA4 diagnostic evidence (JSON)
+             ↓
+Gemini tool-using investigation + schema-validated structured findings
+             ↓
+Python executive reporting adapter (JSON)
+             ↓
+Maxim — Streamlit stakeholder dashboard / PDF / email preview
 ```
 
-Find the structured output in `outputs/investigations.json`. No accounts, API keys, or billing required.
+**Local execution:** The investigation scripts are run deliberately by the analyst. There is **no scheduled automation or continuous ingestion** in this case-study deployment.
 
-## Demo incidents (known synthetic ground truth)
-- 2026-10-13: Paid search conversion-rate collapse.
-- 2026-10-14: Paid search conversion-rate collapse.
-- 2026-10-20: Email traffic collapse.
+**Hosted dashboard:** Streamlit reads the committed investigation snapshot in `demo_data/executive_report.json` when local generated output is unavailable. It does not require recruiters to authenticate to BigQuery or Gemini.
 
-The detector uses a pooled conversion rate from the previous four matching weekdays and a minimum 35% decline threshold; for conversion alerts it requires a minimum 150 current sessions and estimated 15-order deficit. This is a teaching baseline, not a validated production model.
+## Results: historical evidence vs. interview simulation
 
-## Project files
+The analysis uses a **public, obfuscated GA4 ecommerce sample from 2020**. Daily aggregates cover 37 days in the analysed window; 9 dates had sufficient data for a comparison with four prior matching weekdays.
 
-| Path | What to read |
+| Metric — 7 December 2020 | Original historical sample | Modified red-alert demonstration |
+| --- | ---: | ---: |
+| Sessions | 5,461 | 5,461 |
+| Sessions vs. four-Monday baseline | +42.0% | +42.0% |
+| Baseline purchasing-session rate | 1.95% | 1.95% |
+| Observed purchasing-session rate | 1.67% | 1.03% |
+| Relative purchasing-session-rate change | −14.5% | −47.4% |
+| Estimated purchasing-session gap | 15.5 | 50.5 |
+| Detector outcome | No qualifying red alert; watchlist case | **Red alert: `session_purchase_rate_drop`** |
+
+The red demonstration uses a **separate copy** of the already transformed BigQuery data, `fct_daily_ecommerce_red_demo`, with deliberately modified purchase metrics for 7 December; the original `fct_daily_ecommerce` table remains unchanged. No new dbt run is required when switching the input to the existing Python detector.
+
+The red case satisfies all three configured alert conditions: **at least 150 sessions, at least a 35% relative purchasing-session-rate decline, and at least a 15-session estimated gap**. These are heuristic thresholds, not a statistical-significance test.
+
+Gemini uses two bounded analysis tools (`get_ga4_diagnostic` and `compare_ga4_performance`) and produces an executive narrative, three plausible hypotheses, and three recommended analytical checks. Explanations such as traffic-quality dilution, checkout friction, or inventory availability are **hypotheses**, not verified causes. AI interpretations remain subject to factual review.
+
+## Running the local interview demo
+
+The source code and scripts are versioned on GitHub, but the BigQuery tables and API credentials remain in the owner's Google Cloud environment. Local execution requires an activated Python virtual environment with dependencies installed, Google BigQuery authentication, and an authorized Gemini API key.
+
+From `case-studies/01-signal-investigator/`:
+
+```bash
+# Modified BigQuery copy → real red alert → Gemini → Maxim
+./scripts/run_demo.sh red
+
+# Original BigQuery source → historical investigation → Maxim
+./scripts/run_demo.sh original
+```
+
+The script runs the existing diagnostic, tool-using Gemini agent, structured Gemini investigation, executive reporting adapter, then starts Streamlit locally. It does not modify BigQuery data. Use `Ctrl+C` to stop Streamlit before switching scenarios.
+
+For tests:
+
+```bash
+python -m unittest discover -s tests -p 'test_*.py'
+```
+
+**Latest local verification (5 November 2026): 110 tests passed.** This is a local test result; it is not a claim of production readiness.
+
+## Online dashboard vs. local workflow
+
+| | Public-facing Streamlit dashboard | Local interview demo |
+| --- | --- | --- |
+| Data | Version-controlled report snapshot | Selected BigQuery transformed table |
+| Gemini calls on page load | No | No; scripts execute before the page opens |
+| Dashboard reflects changed data | When an updated snapshot is committed and deployed | After running the scripts again |
+| Credentials needed by viewer | No | Local owner credentials required to regenerate reports |
+| Intended audience | Recruiters and stakeholders | Technical walkthrough and interview |
+
+Streamlit Community Cloud entrypoint: `case-studies/01-signal-investigator/streamlit_app.py`. The Python dependency file is alongside that entrypoint. Do not commit `.env`, local credentials, or `.streamlit/secrets.toml`.
+
+## Main project files
+
+| Path | Responsibility |
 | --- | --- |
-| `docs/01-project-charter.md` | Business problem, MVP, success criteria |
-| `docs/02-architecture.md` | Current/target architecture and cost caveat |
-| `docs/03-build-log.md` | Decisions, stage results and what happens next |
-| `docs/04-metric-definitions.md` | Reproducible metric/data contract |
-| `docs/05-evaluation-plan.md` | Unit tests now; faithfulness and accuracy later |
-| `docs/06-publication-checklist.md` | Checklist for a credible public case study |
-| `src/generate_data.py` | Reproducible demo-data generator |
-| `src/detect.py` | Explanation-first analytical detection |
-| `sql/ga4_public_sample_daily_metrics.sql` | Next-stage exploration of a public GA4 dataset |
+| `src/bigquery_reader.py` | Read selected transformed BigQuery table with a query-size safeguard |
+| `src/ga4_adapter.py` | Standardize daily GA4 metrics |
+| `src/detect_ga4.py` | Deterministic anomaly checks |
+| `src/ga4_diagnostics.py` | Generate evidence and baseline comparisons |
+| `src/ai_tool_agent.py` | Gemini analysis using bounded tools |
+| `src/ai_investigation_structured.py` | Structured investigation with schema validation |
+| `src/ga4_reporting_adapter.py` | Combine diagnostics and AI findings for executive reporting |
+| `streamlit_app.py` | Maxim dashboard and reporting experience |
+| `demo_data/executive_report.json` | Portable, versioned report snapshot for hosted viewing |
+| `scripts/run_demo.sh` | One-command local scenario execution |
+| `tests/` | Automated unit and integration-style checks |
 
-## Six-stage plan
-1. **Define the investigation problem and build a deterministic baseline** (this repository).
-2. Query real public GA4 ecommerce sample data; model validated metrics with **dbt**.
-3. Add **Fivetran** ingestion of sample campaign spend from Google Sheets and data lineage.
-4. Build a bounded **Gemini function-calling agent** over trusted analytic tools.
-5. Create a readable UI, human-in-the-loop investigations and a business-style demo.
-6. Evaluate, document, deploy, and publish a GitHub/LinkedIn case study.
+The repository also preserves the earlier synthetic-channel detection and funnel-investigation exercises as development history. They are not the input to the current GA4 executive report.
 
-## Reality checks
-- All provided CSV figures are **synthetic**, not a company's observed performance.
-- Google's public GA4 dataset covers 2020-11-01 through 2021-01-31 and is obfuscated with documented inconsistencies; it cannot be used as proof of any current ecommerce incident.
-- BigQuery Sandbox can query public data at no cost, but **Fivetran BigQuery destination does not support sandbox accounts**. Using Fivetran → BigQuery later may require a billing-enabled project; set budget alerts.
-- A detector is not an AI agent. Never describe Stage 1 as an AI system until the tool-calling agent is actually built.
+## Interpretation and limitations
 
-## References
-- Google public GA4 ecommerce sample: https://developers.google.com/analytics/bigquery/web-ecommerce-demo-dataset
-- dbt BigQuery quickstart: https://docs.getdbt.com/guides/bigquery?step=1
-- Fivetran Sheets connector: https://fivetran.com/docs/connectors/files/google-sheets/google-sheets-setup-guide
-- Fivetran BigQuery destination caveat: https://fivetran.com/docs/destinations/bigquery/setup-guide
-- Gemini API Python SDK/function calling: https://ai.google.dev/gemini-api/docs/get-started
+- **Case-study provenance:** The red incident is a controlled modification of historical transformed data. It must not be presented as an actual event at an operating business.
+- **Observed vs. modelled:** Purchasing sessions are not orders. The estimated 50.5-session gap measures departure from the chosen historical benchmark; it is not confirmed lost transactions or revenue.
+- **Incomplete diagnostic dimensions:** The current daily model does not support causal attribution by campaign, device, inventory status, payment processor, or checkout step.
+- **Evidence quality:** Google's obfuscated public sample can contain inconsistencies. The agent does not establish causal or statistical significance from the aggregate comparison.
+- **Human review:** AI hypotheses and recommended actions require analyst validation before operational decisions.
+- **Financial impact:** The original GA4 day has historical revenue fields, but the modified red scenario does not yet have a consistent revenue model. Financial-impact comparison is **the next planned enhancement after dashboard deployment**, not a completed feature.
+- **Email:** The dashboard supports an email-preview workflow. Live sending from an Outlook account requires separate delegated authorization and is not configured in the public demo.
+
+## Next milestone
+
+1. Deploy Maxim from the committed, static report snapshot to Streamlit Community Cloud.
+2. Add the live dashboard link to this README and the portfolio README.
+3. Extend the *existing* investigation with verified recorded revenue, a same-weekday revenue baseline, and a carefully qualified financial-impact estimate.
+
+## Data and technical references
+
+- [Google GA4 public ecommerce BigQuery sample](https://developers.google.com/analytics/bigquery/web-ecommerce-demo-dataset)
+- [dbt for BigQuery](https://docs.getdbt.com/guides/bigquery)
+- [Gemini API function calling](https://ai.google.dev/gemini-api/docs/function-calling)
+- [Streamlit Community Cloud deployment](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy)

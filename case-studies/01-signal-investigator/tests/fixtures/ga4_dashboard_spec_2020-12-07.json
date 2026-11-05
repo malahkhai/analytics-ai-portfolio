@@ -1,0 +1,24 @@
+{
+  "investigation_date": "2020-12-07",
+  "generated_by": "gemini-3.8-flash",
+  "factual_review_status": "pending",
+  "dashboard_spec": {
+    "headline": "Overview of Session Growth and Purchase Rate Trends",
+    "kpis": [
+      "observed_sessions",
+      "session_change_pct",
+      "observed_purchase_rate_pct",
+      "purchase_rate_change_pct"
+    ],
+    "charts": [
+      "sessions_vs_baseline",
+      "purchase_rate_vs_baseline"
+    ],
+    "sections": [
+      "executive_summary",
+      "alert_explanation",
+      "hypotheses",
+      "recommended_checks"
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "date": "2020-12-07",
+  "source": "GA4 public ecommerce sample · purchase events",
+  "currency": "USD",
+  "purchase_events": 110,
+  "purchases_with_revenue": 110,
+  "positive_revenue_events": 106,
+  "distinct_transaction_ids": 105,
+  "purchase_revenue_usd": 8472.0,
+  "baseline_dates": [],
+  "baseline_revenue_usd": null,
+  "revenue_difference_usd": null,
+  "relative_revenue_change_pct": null,
+  "status": "observed_revenue_only",
+  "limitations": "Obfuscated GA4 historical sample. Verified December 7 purchase event revenue; historical revenue baseline not yet calculated. Not attributed lost revenue."
+}

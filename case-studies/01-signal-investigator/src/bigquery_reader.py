@@ -1,11 +1,29 @@
 
 """Retrieve validated ecommerce metrics from BigQuery."""
 
+import os
+
 from google.cloud import bigquery
 
 PROJECT_ID = "signal-investigator-analytics"
 DATASET_ID = "signal_investigator_dev"
-MODEL_NAME = "fct_daily_ecommerce"
+
+# Choose which BigQuery data enters the anomaly detector.
+MODEL_NAME = os.getenv(
+    "SIGNAL_GA4_MODEL",
+    "fct_daily_ecommerce",
+)
+
+ALLOWED_MODELS = {
+    "fct_daily_ecommerce",
+    "fct_daily_ecommerce_red_demo",
+}
+
+if MODEL_NAME not in ALLOWED_MODELS:
+    raise ValueError(
+        f"Unsupported BigQuery source: {MODEL_NAME}"
+    )
+
 
 MAX_BYTES = 1024 ** 3  # 1 GiB
 

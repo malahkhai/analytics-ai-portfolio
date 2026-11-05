@@ -1,135 +1,56 @@
-
 # Analytics & AI Engineering Portfolio
 
-## About This Portfolio
+Practical case studies connecting **digital analytics, business intelligence, analytics engineering, and applied AI** to business decisions.
 
-A collection of practical projects exploring the
-intersection of Data Analytics, Data Engineering,
-Business Intelligence and Artificial Intelligence.
+My work combines digital performance and ecommerce analytics with hands-on development of data products. Each case study documents the business question, data model, working implementation, evaluation, and limitations—not just a dashboard screenshot.
 
-The objective is to design and develop intelligent
-analytics systems that transform business data into
-reliable, actionable insights.
+## Case studies
 
-My professional background spans digital analytics,
-marketing performance, ecommerce analytics,
-business intelligence and analytics leadership.
+### 01 · Signal Investigator — AI-assisted ecommerce anomaly investigation
 
-This portfolio documents my development of
-hands-on technical expertise in data pipelines,
-analytics engineering and AI-powered decision systems.
+**Status: Working case study; Streamlit publication in progress.**
 
----
+Signal Investigator examines changes in ecommerce performance, applies explicit anomaly rules, and lets a Gemini agent investigate verified evidence using constrained analytical tools. **Maxim**, the stakeholder dashboard, presents the finding, supporting KPIs, hypotheses, recommended checks, and a PDF / email-preview experience.
 
-## Case Studies
+**Implemented:**
+- GA4 public ecommerce sample transformed in BigQuery with dbt
+- Python data adaptation, validation, weekday-baseline comparisons, and anomaly detection
+- Gemini tool-using and structured AI investigations with schema checks
+- Executive reporting adapter and Streamlit dashboard (Maxim)
+- One-command local interview demonstration against two selectable BigQuery tables
+- 110 passing automated tests in the latest local verification (5 November 2026)
 
-### 01. Signal Investigator
-**AI Analytics Investigation Agent**
+**Interview demonstration:** The authentic historical sample produces a yellow watchlist for 7 December 2020; a **separately modified copy** of the transformed daily metrics produces a red alert. The red case is a deliberate simulation, not a claim about real historical trading performance. The same Python detection and Gemini investigation path is used in both cases.
 
-Status: In Development
+[Explore the Signal Investigator case study](case-studies/01-signal-investigator/)
 
-An analytics investigation system designed to:
+*Maxim live dashboard URL: to be added after deployment.*
 
-- Detect anomalies in ecommerce performance
-- Investigate conversion funnel deterioration
-- Validate data quality before analysis
-- Generate evidence-based investigation reports
-- Support structured root-cause investigations
+### 02 · Marketing Performance & Budget Allocation Agent
 
-**Current capabilities**
-- Python anomaly detection
-- Rule-based investigation planning
-- Ecommerce funnel analysis
-- Automated data-quality validation
-- 12 passing automated tests
+**Status: Planned.** Explore channel and campaign performance, budget allocation, and evidence-grounded optimization recommendations.
 
-**Planned capabilities**
-- BigQuery data integration
-- dbt analytics engineering
-- Fivetran data ingestion
-- LLM-powered investigation workflows
-- Interactive analytics interface
+### 03 · Tracking Quality Assurance Agent
 
-[Explore Signal Investigator](case-studies/01-signal-investigator/)
+**Status: Planned.** Detect implementation errors, unexpected event changes, and data quality problems in digital measurement.
 
----
+### 04 · Executive Analytics Copilot
 
-### 02. Marketing Performance Agent
-Status: Planned
+**Status: Planned.** Explore controlled, evidence-based business questions over trusted analytics datasets.
 
-An AI-assisted marketing analytics system for
-evaluating campaign performance, identifying
-inefficiencies and recommending optimisations.
+## Technical focus
 
-### 03. Tracking QA Agent
-Status: Planned
+**Analytics:** GA4, SQL, digital measurement, ecommerce performance, conversion metrics, Power BI, Looker Studio.
+**Data engineering:** Python, BigQuery, dbt, source validation and data contracts.
+**Applied AI:** Gemini function calling, structured responses, evidence validation and human review.
+**Engineering practices:** Git, automated tests, reproducible analytical workflows, documented limitations and stakeholder-facing reporting.
 
-An automated analytics quality-assurance system
-for detecting event-tracking problems, missing
-parameters and data inconsistencies.
+## Development principles
 
-### 04. Executive Analytics Copilot
-Status: Planned
+1. Start with a concrete business question and explicitly defined metrics.
+2. Establish a deterministic analytical baseline before asking an LLM to interpret findings.
+3. Separate observed evidence from hypotheses, modelled gaps, and proposed actions.
+4. Use public or synthetic case-study data; never imply a simulated event is a real customer incident.
+5. Document what is implemented, what is manual, and what remains planned.
 
-A conversational business intelligence assistant
-that enables stakeholders to ask questions about
-business performance and receive evidence-based
-answers.
-
----
-
-## Technology Stack
-
-### Analytics & Business Intelligence
-- Google Analytics 4
-- Google Tag Manager
-- SQL
-- Looker Studio
-- Power BI
-
-### Data Engineering
-- Python
-- BigQuery (planned)
-- dbt (planned)
-- Fivetran (planned)
-
-### AI Engineering
-- Generative AI
-- Large Language Models
-- AI Agents
-- Function Calling
-- Retrieval-Augmented Generation (planned)
-
-### Engineering Practices
-- Git and GitHub
-- Automated Testing
-- Data Quality Validation
-- Technical Documentation
-
----
-
-## Development Approach
-
-Each case study follows a structured process:
-
-1. Define a real business problem
-2. Design the technical architecture
-3. Develop a working prototype
-4. Test and validate results
-5. Document findings and limitations
-6. Evaluate business impact
-7. Publish the completed case study
-
-Projects may initially use synthetic or public
-datasets to ensure reproducibility and protect
-confidential business information.
-
----
-
-## Career Focus
-
-Senior Manager / Lead — Data, Analytics & AI
-
-Bridging analytics leadership, data engineering
-and applied artificial intelligence to improve
-business decision-making.
+**Career focus:** Senior Manager / Lead roles at the intersection of Data, Analytics & AI.

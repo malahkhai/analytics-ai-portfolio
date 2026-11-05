@@ -2,3 +2,6 @@
 # Generated GA4 investigation outputs
 outputs/ga4_*.json
 outputs/ga4_*.md
+
+# Streamlit credentials
+.streamlit/secrets.toml
