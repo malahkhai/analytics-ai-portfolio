@@ -38,7 +38,7 @@ from src.executive_report import (
     executive_headline, display_action_title,
 )
 from src.executive_pdf import generate_pdf
-from src.financial_evidence import matching_financial_evidence
+from src.financial_evidence import reporting_financial_evidence
 from src.email_delivery import (
     EXPECTED_SENDER, compose_sample, validate_recipient, begin_outlook_sign_in,
     complete_outlook_sign_in, send_graph_email,
@@ -386,7 +386,7 @@ def _email_configuration(key: str) -> str:
 @st.dialog("Email Maxim's investigation")
 def sample_email_dialog(selected: dict, active_rows: list[dict]):
     """Recipient popup. Mail only transmits after Outlook OAuth + click."""
-    finance = matching_financial_evidence(selected)
+    finance = reporting_financial_evidence(selected)
     subject, body = compose_sample(selected, short_summary(selected, 650), finance)
     st.caption("Case-study report preview · sender requires Outlook authorization")
     recipient = st.text_input("Recipient email", placeholder="stakeholder@example.com", key="maxim_recipient")
@@ -559,12 +559,12 @@ with note_slot:
         "GA4 public ecommerce sample–derived case-study data (2020), not live operations. "
         "For interviews, the daily BigQuery metrics may be modified; all presented "
         "detector and Gemini findings come from the selected reporting file. "
-        "Financial impact and statistical significance are not established."
+        "Revenue may be recorded or modeled; it is not proven lost revenue. Statistical significance is not established."
     )
 with email_slot:
     if st.button("Email summary", width="stretch", key="maxim_email_popup"):
         sample_email_dialog(selected, active_rows)
-finance = matching_financial_evidence(selected)
+finance = reporting_financial_evidence(selected)
 with pdf_slot:
     st.download_button(
         "Export PDF", data=generate_pdf(selected, active_rows, finance),
@@ -578,9 +578,9 @@ avatar_uri = (
 )
 advice = decision(selected)
 finance_status = (
+    f"{'Modeled' if finance['revenue_evidence_type'] == 'modeled' else 'Recorded'}: "
     f"${finance['revenue_difference_usd']:+,.0f} vs weekday baseline"
-    if finance and finance.get("revenue_difference_usd") is not None
-    else "Baseline comparison pending" if finance else "Unavailable for selected data"
+    if finance else "Revenue evidence unavailable"
 )
 review_label = (
     "AI-generated · factual review pending"
@@ -614,57 +614,58 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Only show recorded GA4 revenue when it matches the unchanged historical case.
-# For modified BigQuery case-study inputs, money must be treated as unavailable.
+# Revenue now comes from the same reporting record as the Gemini assessment.
 if finance:
-    revenue_label = f"${finance['purchase_revenue_usd']:,.0f} USD"
-    if finance.get("revenue_difference_usd") is None:
-        comparison = "Not yet calculated"
-        comparison_context = "Run the optional matching-weekday revenue check"
-    else:
-        comparison = f"${finance['revenue_difference_usd']:+,.0f} USD"
-        comparison_context = (
-            f"{finance['relative_revenue_change_pct']:+.1f}% vs matched weekdays"
-            if finance.get("relative_revenue_change_pct") is not None else
-            "Comparison vs baseline (baseline was zero)"
-        )
-    st.markdown('<div class="sr-block-title">Commercial context · recorded revenue</div>', unsafe_allow_html=True)
+    is_modeled = finance["revenue_evidence_type"] == "modeled"
+    evidence_label = "Modeled" if is_modeled else "Recorded"
+    revenue_label = f"${finance['purchase_revenue_usd']:,.2f} USD"
+    comparison = f"${finance['revenue_difference_usd']:+,.2f} USD"
+    comparison_context = (
+        f"{finance['relative_revenue_change_pct']:+.1f}% versus four matching weekdays"
+    )
+    covered = finance.get("purchases_with_revenue")
+    event_count = finance.get("purchase_events")
+    coverage = (
+        f"{covered} / {event_count}" if event_count is not None
+        else f"{covered} covered purchase events" if covered is not None
+        else "Unavailable"
+    )
+    coverage_detail = (
+        f"{finance['distinct_transaction_ids']} distinct transaction IDs · sample data"
+        if finance.get("distinct_transaction_ids") is not None
+        else "Revenue coverage in the selected BigQuery dataset"
+    )
+    st.markdown(
+        f'<div class="sr-block-title">Commercial impact · {evidence_label.lower()} revenue</div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(
         '<div class="sr-finance">'
-        '<div class="sr-finance-cell"><div class="sr-kicker">PURCHASE REVENUE</div>'
+        f'<div class="sr-finance-cell"><div class="sr-kicker">{evidence_label.upper()} PURCHASE REVENUE</div>'
         f'<div class="sr-finance-number">{escape(revenue_label)}</div>'
-        '<div class="sr-finance-detail">Recorded GA4 purchase-event revenue (USD)</div></div>'
+        f'<div class="sr-finance-detail">{evidence_label} GA4-derived revenue (USD)</div></div>'
         '<div class="sr-finance-cell"><div class="sr-kicker">REVENUE VS HISTORICAL BASELINE</div>'
         f'<div class="sr-finance-number">{escape(comparison)}</div>'
         f'<div class="sr-finance-detail">{escape(comparison_context)}</div></div>'
         '<div class="sr-finance-cell"><div class="sr-kicker">PURCHASE EVENT COVERAGE</div>'
-        f'<div class="sr-finance-number">{finance["purchases_with_revenue"]} / {finance["purchase_events"]}</div>'
-        f'<div class="sr-finance-detail">{finance["distinct_transaction_ids"]} distinct transaction IDs · sample data</div>'
-        '</div></div>', unsafe_allow_html=True,
-    )
-    st.caption("Financial figures are from historical, obfuscated GA4 purchase events. "
-               "Revenue difference is descriptive—not confirmed revenue lost because of this incident, "
-               "and not a forecast. Purchase events are not necessarily distinct orders.")
-else:
-    st.markdown('<div class="sr-block-title">Commercial impact · evidence status</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="sr-finance">'
-        '<div class="sr-finance-cell"><div class="sr-kicker">REVENUE FOR SELECTED DATA</div>'
-        '<div class="sr-finance-number">Unavailable</div>'
-        '<div class="sr-finance-detail">No matched revenue evidence for this investigation record</div></div>'
-        '<div class="sr-finance-cell"><div class="sr-kicker">REVENUE VS BASELINE</div>'
-        '<div class="sr-finance-number">Not calculated</div>'
-        '<div class="sr-finance-detail">Cannot estimate a revenue variance from session rates alone</div></div>'
-        '<div class="sr-finance-cell"><div class="sr-kicker">POTENTIAL FINANCIAL IMPACT</div>'
-        '<div class="sr-finance-number">Not established</div>'
-        '<div class="sr-finance-detail">Purchasing-session gap is not orders or proven lost revenue</div></div>'
+        f'<div class="sr-finance-number">{escape(coverage)}</div>'
+        f'<div class="sr-finance-detail">{escape(coverage_detail)}</div></div>'
         '</div>', unsafe_allow_html=True,
     )
-    st.caption(
-        "The original historical revenue snapshot is excluded when the selected "
-        "report's performance figures differ from that source. No revenue value "
-        "is inferred for modified case-study data."
-    )
+    if is_modeled:
+        st.caption(
+            "MODELED scenario: assumes historical revenue per purchasing session "
+            "remains constant. Negative variance is against the four-Monday "
+            "revenue benchmark—not verified lost revenue."
+        )
+    else:
+        st.caption(
+            "Recorded purchase-event revenue from the obfuscated historical GA4 "
+            "sample. Historical variance is descriptive, not a causal loss estimate."
+        )
+else:
+    st.markdown('<div class="sr-block-title">Commercial impact · evidence status</div>', unsafe_allow_html=True)
+    st.info("Validated revenue comparison is not available for the selected investigation.")
 
 # Six cards, ordered and styled to mirror the reference's executive KPI block.
 st.markdown('<div class="sr-block-title">Key metrics</div>', unsafe_allow_html=True)

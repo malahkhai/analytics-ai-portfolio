@@ -12,6 +12,7 @@ WITH raw_events AS (
         PARSE_DATE('%Y%m%d', event_date) AS event_day,
         event_name,
         user_pseudo_id,
+        ecommerce.purchase_revenue_in_usd AS purchase_revenue_in_usd,
 
         (
             SELECT ep.value.int_value
@@ -33,6 +34,7 @@ session_events AS (
     SELECT
         event_day,
         event_name,
+        purchase_revenue_in_usd,
 
         CASE
             WHEN user_pseudo_id IS NOT NULL
@@ -68,6 +70,23 @@ SELECT
 
     COUNTIF(event_name = 'purchase')
         AS purchase_events,
+
+    COUNTIF(event_name = 'purchase'
+        AND purchase_revenue_in_usd IS NOT NULL
+        ) AS purchase_events_with_revenue,
+
+    ROUND(
+        SUM(
+        IF(
+            event_name = 'purchase',
+            COALESCE(purchase_revenue_in_usd, 0),
+            0
+             )
+            ),
+            2
+        ) AS purchase_revenue_usd,
+
+
 
     COUNT(DISTINCT IF(
         event_name = 'purchase',

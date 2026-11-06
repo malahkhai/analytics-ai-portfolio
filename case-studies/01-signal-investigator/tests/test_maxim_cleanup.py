@@ -55,13 +55,45 @@ class DashboardCleanupTests(unittest.TestCase):
         self.assertNotIn("8,472", extracted)
         self.assertIn("Purchase rate fell 47.4%", extracted)
 
+    def test_report_row_modeled_finance_reaches_email_and_pdf(self):
+        from src.financial_evidence import reporting_financial_evidence
+        from pypdf import PdfReader
+        from io import BytesIO
+        red = red_case()
+        red.update({
+            "purchase_revenue_usd": 5213.54,
+            "baseline_revenue_usd": 6918.0,
+            "revenue_difference_usd": -1704.46,
+            "revenue_change_pct": -24.6,
+            "revenue_evidence_type": "modeled",
+            "purchase_events_with_revenue": 60,
+        })
+        finance = reporting_financial_evidence(red)
+        self.assertEqual(finance["purchase_revenue_usd"], 5213.54)
+        self.assertEqual(finance["revenue_evidence_type"], "modeled")
+        _, body = compose_sample(red, red["executive_summary"])
+        self.assertIn("Modeled purchase revenue: $5,213.54", body)
+        self.assertIn("-1,704.46", body)
+        self.assertNotIn("8,472", body)
+        blob = generate_pdf(red, [red])
+        extracted = " ".join(page.extract_text() or "" for page in PdfReader(BytesIO(blob)).pages)
+        self.assertIn("Modeled revenue", extracted)
+        self.assertNotIn("8,472", extracted)
+
+    def test_incomplete_report_finance_does_not_fallback_to_historical(self):
+        from src.financial_evidence import reporting_financial_evidence
+        red = red_case()
+        red["purchase_revenue_usd"] = 5213.54
+        self.assertIsNone(reporting_financial_evidence(red))
+        self.assertIsNone(reporting_financial_evidence(red, load_financial_evidence("2020-12-07")))
+
     def test_dashboard_no_longer_uses_hardcoded_red_replay(self):
         source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text()
         self.assertNotIn("scenario_rows", source)
         self.assertNotIn("maxim_interview_demo_toggle", source)
         self.assertNotIn("Simulate red alert", source)
         self.assertIn('padding:5rem 2.8rem 3.5rem;', source)
-        self.assertIn('matching_financial_evidence(selected)', source)
+        self.assertIn('reporting_financial_evidence(selected)', source)
 
 
 if __name__ == '__main__':

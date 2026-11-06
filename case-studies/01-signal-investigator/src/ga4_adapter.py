@@ -53,13 +53,47 @@ def adapt_ga4_records(records):
                 f"Inconsistent purchase rate on {day}"
             )
 
-        prepared.append({
+
+        prepared_row = {
             "date": day,
             "scope": "all_channels_aggregated",
             "sessions": sessions,
             "purchase_events": purchase_events,
             "purchasing_sessions": purchasing_sessions,
             "session_purchase_rate_pct": reported_rate,
-        })
+        }
+
+        # Preserve and validate financial metrics when supplied.
+        financial_fields = (
+            "purchase_events_with_revenue",
+            "purchase_revenue_usd",
+            "revenue_evidence_type",
+        )
+
+        if any(key in record for key in financial_fields):
+            if not all(key in record for key in financial_fields):
+                raise ValueError(f"Incomplete revenue evidence on {day}")
+
+            coverage = int(record["purchase_events_with_revenue"])
+            revenue = float(record["purchase_revenue_usd"])
+            evidence_type = record["revenue_evidence_type"]
+
+            if not 0 <= coverage <= purchase_events:
+                raise ValueError(f"Invalid revenue coverage on {day}")
+
+            if not 0 <= revenue < float("inf"):
+                raise ValueError(f"Invalid revenue amount on {day}")
+
+            if evidence_type not in ("recorded", "modeled"):
+                raise ValueError(f"Invalid revenue evidence type on {day}")
+
+            prepared_row.update({
+                "purchase_events_with_revenue": coverage,
+                "purchase_revenue_usd": revenue,
+                "revenue_evidence_type": evidence_type,
+            })
+
+        prepared.append(prepared_row)
+
 
     return sorted(prepared, key=lambda row: row["date"])

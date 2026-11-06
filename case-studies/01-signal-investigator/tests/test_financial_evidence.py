@@ -7,7 +7,10 @@ from src.financial_evidence import validate_financial_record, load_financial_evi
 
 class FinanceEvidenceTests(unittest.TestCase):
     def test_existing_verified_snapshot(self):
-        r = load_financial_evidence("2020-12-07")
+        r = load_financial_evidence(
+            "2020-12-07",
+            outputs=Path(__file__).resolve().parent / "fixtures",
+        )
         self.assertEqual(r["purchase_revenue_usd"], 8472)
         self.assertIsNone(r["baseline_revenue_usd"])
 

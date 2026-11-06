@@ -97,6 +97,85 @@ def matching_financial_evidence(row: dict, financial: dict | None = None) -> dic
     return financial
 
 
+def financial_context_for_diagnostic(
+    evaluation: dict,
+    current: dict,
+    model_name: str,
+) -> dict | None:
+    """Provide validated financial context for the December 7 case."""
+
+    day = evaluation["date"]
+
+    if day != "2020-12-07":
+        return None
+
+    financial = load_financial_evidence(day)
+
+    if financial is None:
+        raise ValueError("Financial evidence is missing")
+
+    baseline = financial["baseline_revenue_usd"]
+
+    if baseline is None or baseline <= 0:
+        raise ValueError("Valid revenue baseline required")
+
+    # Original historical GA4 case.
+    if model_name == "fct_daily_ecommerce":
+        if (
+            current["sessions"] != 5461
+            or current["purchasing_sessions"] != 91
+            or current["purchase_events"] != 110
+        ):
+            raise ValueError("Original financial evidence does not match data")
+
+        if matching_financial_evidence(
+            {**evaluation, "investigation_date": day}, financial
+        ) is None:
+            raise ValueError("Historical revenue validation failed")
+
+        revenue = financial["purchase_revenue_usd"]
+        evidence_type = "recorded"
+        assumption = None
+
+    # Modified BigQuery data for the interview.
+    elif model_name == "fct_daily_ecommerce_red_demo":
+        if current["sessions"] != 5461:
+            raise ValueError("Simulation differs from historical traffic")
+
+        purchasing_sessions = current["purchasing_sessions"]
+
+        if not 0 <= purchasing_sessions <= 91:
+            raise ValueError("Invalid simulated purchasing-session count")
+
+        revenue = round(
+            financial["purchase_revenue_usd"]
+            * purchasing_sessions / 91,
+            2,
+        )
+
+        evidence_type = "modeled"
+        assumption = (
+            "Historical revenue per purchasing session held constant"
+        )
+
+    else:
+        return None
+
+    difference = round(revenue - baseline, 2)
+
+    return {
+        "evidence_type": evidence_type,
+        "revenue_usd": revenue,
+        "baseline_revenue_usd": baseline,
+        "revenue_difference_usd": difference,
+        "revenue_change_pct": round(
+            (revenue / baseline - 1) * 100, 1
+        ),
+        "assumption": assumption,
+        "currency": "USD",
+    }
+
+
 def build_financial_record(day: str, baseline_dates: list[str], daily: dict[str, dict]) -> dict:
     """Keep observed dollars distinct from a noncausal baseline comparison."""
     if len(baseline_dates) != 4 or len(set(baseline_dates)) != 4:
@@ -125,6 +204,60 @@ def build_financial_record(day: str, baseline_dates: list[str], daily: dict[str,
         "limitations": "Obfuscated GA4 sample; purchase-event revenue, not reconciled ledger revenue. Difference from baseline is not attributable lost revenue or a forecast.",
     }
     return validate_financial_record(record, day)
+
+
+def reporting_financial_evidence(row: dict, financial: dict | None = None) -> dict | None:
+    """Prefer financial fields from the validated reporting pipeline.
+
+    Backwards-compatible historical fallback supports the older public
+    snapshot. Never use historical raw revenue for a different scenario.
+    """
+    import math
+
+    fields = (
+        "purchase_revenue_usd",
+        "baseline_revenue_usd",
+        "revenue_difference_usd",
+        "revenue_change_pct",
+        "revenue_evidence_type",
+        "purchase_events_with_revenue",
+    )
+    # An incomplete reporting record must not silently use stale revenue.
+    if any(row.get(field) is not None for field in fields):
+        if any(row.get(field) is None for field in fields):
+            return None
+        kind = row["revenue_evidence_type"]
+        if kind not in ("recorded", "modeled"):
+            return None
+        try:
+            values = [float(row[name]) for name in fields[:4]]
+            coverage = row["purchase_events_with_revenue"]
+        except (TypeError, ValueError, OverflowError):
+            return None
+        revenue, baseline, difference, percent = values
+        if (
+            not all(math.isfinite(v) for v in values)
+            or revenue < 0 or baseline <= 0
+            or type(coverage) is not int or coverage < 0
+            or abs((revenue - baseline) - difference) > 0.03
+            or abs(100 * difference / baseline - percent) > 0.2
+        ):
+            return None
+        return {
+            "purchase_revenue_usd": revenue,
+            "baseline_revenue_usd": baseline,
+            "revenue_difference_usd": difference,
+            "relative_revenue_change_pct": percent,
+            "revenue_evidence_type": kind,
+            "purchases_with_revenue": coverage,
+            "purchase_events": None,  # Not included in reporting rows.
+            "distinct_transaction_ids": None,
+        }
+
+    # Legacy snapshot only: validated recorded GA4 evidence.
+    historical = matching_financial_evidence(row, financial)
+    return ({**historical, "revenue_evidence_type": "recorded"}
+            if historical is not None else None)
 
 
 def fetch_from_bigquery(day: str, baseline_dates: list[str], max_mib: int = 64):

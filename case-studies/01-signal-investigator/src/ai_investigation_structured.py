@@ -34,8 +34,22 @@ class RecommendedCheck(BaseModel):
 
 
 class AIInterpretation(BaseModel):
-    executive_summary: str
-    why_no_alert: str
+    executive_summary: str = Field(
+        description=(
+            "Executive analysis of traffic, purchase conversion, "
+            "revenue versus baseline, financial implications, "
+            "and business urgency. Distinguish recorded revenue "
+            "from modeled revenue."
+        )
+    )
+    why_no_alert: str = Field(
+        description=(
+            "Explain the actual anomaly decision and threshold results. "
+            "If an alert was triggered, explain why it triggered. "
+            "If no alert was triggered, explain why not. "
+            "This is a legacy field name."
+        )
+    )
     hypotheses: list[Hypothesis]
     recommended_checks: list[RecommendedCheck]
     limitations: list[str] = Field(
@@ -100,21 +114,35 @@ Analyse the evidence below.
 Requirements:
 
 - Summarize the observed performance changes.
-- Explain why no anomaly alert was triggered.
+- Explain whether an anomaly alert was triggered and why,
+  using the supplied threshold results.
+- Analyse the financial performance using the supplied revenue evidence.
+- Compare revenue with the four matching-weekday baseline.
+- Explain the financial implications for the business.
 - Provide exactly three plausible hypotheses.
 - Provide exactly three prioritized analytical checks.
-- List the evidence required to test each hypothesis.
+- Identify the evidence required to test each hypothesis.
 - Identify important limitations.
 
-Strict evidence rules:
+Financial evidence rules:
+
+- Use only revenue figures supplied in the evidence.
+- Distinguish recorded revenue from modeled revenue.
+- If revenue_evidence_type is "modeled", explicitly describe the
+  revenue as an estimate based on assumptions.
+- Explain revenue differences in USD and percentage terms.
+- Do not call a modeled revenue deficit confirmed lost revenue.
+- Do not invent revenue, orders, average order values or causes.
+- Do not claim revenue changes were caused by conversion changes
+  without supporting evidence.
+
+General evidence rules:
 
 - Treat the supplied metrics as source evidence.
-- Do not invent additional numerical facts.
-- Do not invent revenue, orders, or channel results.
 - Do not treat purchasing sessions as orders.
-- Do not claim that a hypothesis is proven.
+- Do not claim hypotheses are proven.
 - Do not claim statistical significance.
-- Do not treat estimated shortfalls as lost sales.
+- Do not treat estimated purchasing-session gaps as lost orders.
 - Do not assume particular GA4 export fields exist.
 - True funnel progression requires session-level analysis.
 - Distinguish relative percentages from percentage points.

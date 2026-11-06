@@ -1,4 +1,3 @@
-
 """Generate explainable GA4 performance diagnostics."""
 
 import json
@@ -107,6 +106,38 @@ def build_diagnostic_report(rows):
             ),
         })
 
+        # Include financial performance in the investigation evidence.
+        if (
+            "purchase_revenue_usd" in current
+            and "revenue_evidence_type" in current
+            and "purchase_events_with_revenue" in current
+            and all("purchase_revenue_usd" in row for row in history)
+        ):
+            baseline_revenue = mean(
+                row["purchase_revenue_usd"] for row in history
+            )
+            observed_revenue = current["purchase_revenue_usd"]
+
+            evaluations[-1].update({
+                "purchase_revenue_usd": round(observed_revenue, 2),
+                "baseline_revenue_usd": round(baseline_revenue, 2),
+                "revenue_difference_usd": round(
+                    observed_revenue - baseline_revenue, 2
+                ),
+                "revenue_change_pct": (
+                    round(
+                        100 * (observed_revenue / baseline_revenue - 1),
+                        1,
+                    )
+                    if baseline_revenue > 0 else None
+                ),
+                "revenue_evidence_type": current["revenue_evidence_type"],
+                "purchase_events_with_revenue": current[
+                    "purchase_events_with_revenue"
+                ],
+            })
+
+
     return {
         "project": "Signal Investigator",
         "source": "GA4 public ecommerce sample",
@@ -148,9 +179,5 @@ def main():
             f"{item['date']}: "
             f"{item['purchase_rate_change_pct']:+.1f}%"
         )
-
-    print(f"\nEvidence saved: {OUTPUT}")
-
-
 if __name__ == "__main__":
     main()

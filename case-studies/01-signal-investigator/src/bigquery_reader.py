@@ -42,7 +42,9 @@ def fetch_daily_ecommerce():
             sessions,
             purchase_events,
             purchasing_sessions,
-            session_purchase_rate_pct
+            session_purchase_rate_pct,
+            purchase_events_with_revenue,
+            purchase_revenue_usd
         FROM `{PROJECT_ID}.{DATASET_ID}.{MODEL_NAME}`
         ORDER BY event_day
     """
@@ -87,6 +89,20 @@ def fetch_daily_ecommerce():
             "session_purchase_rate_pct": float(
                 row.session_purchase_rate_pct
             ),
+
+            "purchase_events_with_revenue": int(
+                row.purchase_events_with_revenue
+            ),
+            "purchase_revenue_usd": float(
+                row.purchase_revenue_usd
+            ),
+            "revenue_evidence_type": (
+                "modeled"
+                if MODEL_NAME == "fct_daily_ecommerce_red_demo"
+                and row.event_day.isoformat() == "2020-12-07"
+                else "recorded"
+            ),
+
         })
 
     return records

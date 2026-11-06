@@ -31,17 +31,29 @@ def compose_sample(row: dict, overview: str, financial: dict | None = None) -> t
 
     if is_synthetic(row):
         financial = None  # Never present the real 2020-12-07 revenue as synthetic revenue.
-    from src.financial_evidence import matching_financial_evidence
-    financial = matching_financial_evidence(row, financial) if financial else None
+    from src.financial_evidence import reporting_financial_evidence
+    financial = reporting_financial_evidence(row, financial)
 
     status = {"red": "ANOMALY", "yellow": "WATCHLIST", "green": "DAILY REVIEW", "unknown": "VERIFY DATA"}[severity(row)]
     day = date.fromisoformat(row["investigation_date"]).strftime("%d %b %Y")
     subject = f"[Maxim Demo] {'[SYNTHETIC INTERVIEW ALERT] ' if is_synthetic(row) else ''}{status} | {executive_headline(row)} | {day}"
     d = decision(row)
-    revenue_section = (
-        f"Recorded purchase revenue: ${financial['purchase_revenue_usd']:,.2f} USD\n"
-        + (f"Revenue vs four matching-weekday baseline: ${financial['revenue_difference_usd']:+,.2f} USD (descriptive difference; not lost revenue)\n" if financial.get("revenue_difference_usd") is not None else "Revenue baseline comparison: not yet available\n")
-    ) if financial else "Recorded purchase revenue: not available for this date\n"
+    revenue_section = "Recorded purchase revenue: not available for this date\n"
+    if financial:
+        kind = "Modeled" if financial["revenue_evidence_type"] == "modeled" else "Recorded"
+        revenue_section = f"{kind} purchase revenue: ${financial['purchase_revenue_usd']:,.2f} USD\n"
+        if financial.get("revenue_difference_usd") is None:
+            revenue_section += "Revenue baseline comparison: not yet available\n"
+        else:
+            qualifier = (
+                "modeled assumption, not verified lost revenue" if kind == "Modeled"
+                else "descriptive comparison, not proven lost revenue"
+            )
+            revenue_section += (
+                f"Revenue vs four matching-weekday baseline: "
+                f"${financial['revenue_difference_usd']:+,.2f} USD "
+                f"({financial['relative_revenue_change_pct']:+.1f}%; {qualifier})\n"
+            )
     body = (
         ("SYNTHETIC RED ALERT — INTERVIEW DEMONSTRATION ONLY; NOT A REAL HISTORICAL INCIDENT\n" if is_synthetic(row) else "SAMPLE EXECUTIVE INVESTIGATION — HISTORICAL GA4-DERIVED CASE-STUDY DATA\n")
         + "Prepared by Maxim · AI Performance Investigation Analyst\n"

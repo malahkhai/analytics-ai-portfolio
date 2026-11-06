@@ -6,6 +6,7 @@ sample financial claims. Export is offline; no cloud calls or filesystem writes.
 from __future__ import annotations
 
 from io import BytesIO
+import re
 from html import escape
 
 from reportlab.lib import colors
@@ -52,20 +53,82 @@ def text(pdf, x, y, value, *, font='Helvetica', size=10, fill=INK):
 
 
 def paragraph(pdf, value, x, top, width, *, size=9, leading=None, fill=INK, bold=False, max_height=200):
-    style = ParagraphStyle(
-        'a', fontName='Helvetica-Bold' if bold else 'Helvetica',
-        fontSize=size, leading=leading or size * 1.4,
-        textColor=color(fill), alignment=TA_LEFT,
+    """Fit a complete readable paragraph to its allocated PDF space.
+
+    Do not insert '[excerpt]' or truncate a number mid-sentence. The fixed-size
+    PDF is an executive *brief*; its text is intentionally concise upstream.
+    """
+    content = str(value).strip()
+    original_leading = leading or size * 1.4
+    font_name = 'Helvetica-Bold' if bold else 'Helvetica'
+    # Reduce typography only when required, rather than cutting the content.
+    for factor in (1, .95, .90, .85, .80, .75, .70, .65, .60):
+        actual_size = max(6.2, size * factor)
+        actual_leading = original_leading * (actual_size / size)
+        style = ParagraphStyle('pdf_text', fontName=font_name,
+                               fontSize=actual_size, leading=actual_leading,
+                               textColor=color(fill), alignment=TA_LEFT)
+        candidate = Paragraph(escape(content).replace('\n', '<br/>'), style)
+        _, height = candidate.wrap(width, 10000)
+        if height <= max_height + .1:
+            candidate.drawOn(pdf, x, top-height)
+            return top-height
+    # Rare long free-text responses can exceed a fixed card even at 6.2 pt.
+    # Keep complete sentences if possible; never end on a partial number.
+    sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z(])', content)
+    style = ParagraphStyle('pdf_text', fontName=font_name,
+                           fontSize=6.2, leading=7.4,
+                           textColor=color(fill), alignment=TA_LEFT)
+    kept = []
+    for sentence in sentences:
+        proposal = ' '.join([*kept, sentence])
+        candidate = Paragraph(escape(proposal), style)
+        _, height = candidate.wrap(width, 10000)
+        if height > max_height:
+            break
+        kept.append(sentence)
+    if not kept:
+        # A giant run-on sentence cannot be displayed inside the card;
+        # the card shows an explicit referral, not misleading partial data.
+        kept = ['See the live Maxim dashboard for the full investigation.']
+    candidate = Paragraph(escape(' '.join(kept)), style)
+    _, height = candidate.wrap(width, 10000)
+    candidate.drawOn(pdf, x, top-height)
+    return top-height
+
+
+def pdf_executive_brief(row: dict, financial: dict | None) -> str:
+    """Complete, deterministic first-page business summary from validated data."""
+    traffic = row['session_change_pct']
+    traffic_word = 'rose' if traffic >= 0 else 'fell'
+    rate = row['purchase_rate_change_pct']
+    rate_word = 'fell' if rate < 0 else 'rose'
+    summary = (
+        f"Sessions {traffic_word} {abs(traffic):.1f}% to {row['observed_sessions']:,} "
+        f"(four-weekday baseline {row['baseline_sessions']:,.0f}). "
+        f"Purchase-session rate {rate_word} {abs(rate):.1f}% to "
+        f"{row['observed_purchase_rate_pct']:.2f}% "
+        f"(baseline {row['baseline_purchase_rate_pct']:.2f}%). "
     )
-    p = Paragraph(escape(str(value)).replace('\n', '<br/>'), style)
-    _, h = p.wrap(width, max_height)
-    if h > max_height:
-        # Validated PDF must not overlap subsequent content; trim as an excerpt.
-        value = str(value)[: int(len(str(value)) * max_height / h * .88)] + ' ... [excerpt]'
-        p = Paragraph(escape(value), style)
-        _, h = p.wrap(width, max_height)
-    p.drawOn(pdf, x, top - h)
-    return top - h
+    if financial:
+        evidence_type = financial.get('revenue_evidence_type', 'recorded')
+        label = 'Modeled' if evidence_type == 'modeled' else 'Recorded'
+        summary += f"{label} revenue was ${financial['purchase_revenue_usd']:,.2f}. "
+        difference = financial.get('revenue_difference_usd')
+        baseline = financial.get('baseline_revenue_usd')
+        percentage = financial.get('relative_revenue_change_pct')
+        if difference is not None and baseline is not None and percentage is not None:
+            summary += (
+                f"That is ${difference:+,.2f} ({percentage:+.1f}%) "
+                f"versus the ${baseline:,.2f} Monday benchmark. "
+            )
+        if evidence_type == 'modeled':
+            summary += 'This is a scenario estimate, not verified lost revenue.'
+        else:
+            summary += 'This comparison does not establish a causal effect.'
+    else:
+        summary += 'Revenue evidence is unavailable for this selected investigation.'
+    return summary
 
 
 def label(pdf, x, y, message, col=MUTED):
@@ -122,8 +185,8 @@ def rule_chart(pdf, rows, selected, x, y, w, h, field='sessions'):
 
 def generate_pdf(row: dict, rows: list[dict], financial: dict | None = None) -> bytes:
     """Create a branded two-page PDF. All data is input-derived."""
-    from src.financial_evidence import matching_financial_evidence
-    financial = matching_financial_evidence(row, financial) if financial else None
+    from src.financial_evidence import reporting_financial_evidence
+    financial = reporting_financial_evidence(row, financial)
     if is_synthetic(row):
         financial = None  # No financial revenue or lost-sales amounts simulated.
     buffer = BytesIO()
@@ -171,14 +234,15 @@ def generate_pdf(row: dict, rows: list[dict], financial: dict | None = None) -> 
         card(pdf, mx, 669, inner_w-2, 48, '#F5F6F8', '#F5F6F8', r=6)
         label(pdf, mx+7, 700, heading)
         wrap_words(pdf, value, mx+7, 688, inner_w-15, size=8, leading=10, max_lines=2)
-    text(pdf, margin+16, 657, 'SYNTHETIC INTERVIEW ALERT - NOT A REAL HISTORICAL INCIDENT' if is_synthetic(row) else 'Case-study report. Relative changes compare with four matching weekdays.', size=7, fill=ORANGE if is_synthetic(row) else MUTED)
+    text(pdf, margin+16, 657, 'SYNTHETIC INTERVIEW ALERT - NOT A REAL HISTORICAL INCIDENT' if is_synthetic(row) else 'Executive brief. Full investigation and analytical evidence are in Maxim online.', size=7, fill=ORANGE if is_synthetic(row) else MUTED)
 
     left_w = 322
     right_x = margin + left_w + 12
     right_w = cw-left_w-12
     card(pdf, margin, 450, left_w, 186)
     label(pdf, margin+14, 617, "MAXIM'S EXECUTIVE ASSESSMENT")
-    paragraph(pdf, short_summary(row, max_chars=540), margin+14, 604, left_w-28, size=10.1, leading=15.2, max_height=126)
+    paragraph(pdf, pdf_executive_brief(row, financial), margin+14, 604,
+              left_w-28, size=9.2, leading=13.1, max_height=128)
     text(pdf, margin+14, 463, 'Synthetic authored example; Gemini was not called' if is_synthetic(row) else ('AI pending review' if row.get('has_ai_investigation') else 'Rule-based brief; no AI investigation'), size=7.5, fill=MUTED)
     card(pdf, right_x, 450, right_w, 186, DARK, DARK)
     label(pdf, right_x+12, 617, 'RECOMMENDED NEXT STEP', '#CFD5E4')
@@ -186,7 +250,7 @@ def generate_pdf(row: dict, rows: list[dict], financial: dict | None = None) -> 
     paragraph(pdf, display_action_title(d['action']), right_x+12, 593, right_w-24, size=11, leading=15.5, fill='#FFFFFF', bold=True, max_height=75)
     pdf.setStrokeColor(color('#5C6778'))
     pdf.line(right_x+12, 515, right_x+right_w-12, 515)
-    paragraph(pdf, d['why'], right_x+12, 504, right_w-24, size=8.0, leading=11.2, fill='#E5E7EB', max_height=30)
+    paragraph(pdf, d['why'], right_x+12, 504, right_w-24, size=7.5, leading=9.4, fill='#E5E7EB', max_height=36)
     text(pdf, right_x+12, 462, 'Proposed role*: ' + d['owner'], size=7.0, fill='#CBD5E1')
 
     text(pdf, margin, 432, 'Key metrics', font='Times-Bold', size=15)
@@ -194,9 +258,10 @@ def generate_pdf(row: dict, rows: list[dict], financial: dict | None = None) -> 
     metrics = kpi_definitions(row)
     if financial:
         metrics[1] = {
-            'title': 'Purchase revenue (USD)',
+            'title': ('Modeled revenue (USD)' if financial['revenue_evidence_type'] == 'modeled'
+                      else 'Recorded revenue (USD)'),
             'value': '$'+format(financial['purchase_revenue_usd'], ',.0f'),
-            'delta': ('vs baseline $'+format(financial['baseline_revenue_usd'], ',.0f') if financial.get('baseline_revenue_usd') is not None else 'baseline pending'),
+            'delta': (f"{financial['relative_revenue_change_pct']:+.1f}% vs baseline" if financial.get('relative_revenue_change_pct') is not None else 'baseline pending'),
         }
     card_w = (cw-5*7)/6
     for i, item in enumerate(metrics):
@@ -205,8 +270,6 @@ def generate_pdf(row: dict, rows: list[dict], financial: dict | None = None) -> 
         wrap_words(pdf, item['title'], mx+8, 405, card_w-16, size=7.4, leading=8.8, max_lines=2)
         text(pdf, mx+8, 367, item['value'], font='Helvetica-Bold', size=15.8)
         wrap_words(pdf, item['delta'], mx+8, 350, card_w-15, size=7, leading=9, max_lines=2)
-        pdf.setStrokeColor(color('#C3CAD4'))
-        pdf.line(mx+8, 339, mx+card_w-8, 339)
 
     card(pdf, margin, 74, cw, 241, '#FFFFFF', '#E8D8CB')
     pdf.setFillColor(color('#FBEEE7'))
@@ -253,7 +316,7 @@ def generate_pdf(row: dict, rows: list[dict], financial: dict | None = None) -> 
             paragraph(pdf, 'Proposed role*: ' + suggested_owner_role(check.get('action', '')), margin+230, top-13, cw-246, size=7.2, leading=9.7, max_height=12)
             if i<2:
                 pdf.setStrokeColor(color(BORDER))
-                pdf.line(margin+14, top-11, margin+cw-14, top-11)
+                pdf.line(margin+14, top-30, margin+cw-14, top-30)
     else:
         paragraph(pdf, decision(row)['action'], margin+14, 510, cw-28, size=9)
 
@@ -264,7 +327,7 @@ def generate_pdf(row: dict, rows: list[dict], financial: dict | None = None) -> 
         ('SIMULATED ALERT, NOT HISTORICAL: GA4 sessions/baseline + synthetic purchasing sessions.' if is_synthetic(row) else 'Data: GA4-derived case study (daily metrics may be modified); not live.'),
         'Baseline: mean of four previous matching weekdays; expected range and statistical confidence not estimated.',
         'Purchasing sessions are not orders. Shortfall is not proven lost sales, revenue or ROAS.',
-        ('Synthetic scenario: no revenue figures, lost-sales or business impact is asserted.' if is_synthetic(row) else 'Observed revenue: $' + format(financial['purchase_revenue_usd'], ',.0f') + ' USD; not causal or lost revenue.' if financial else 'Model text requires factual review. Root cause and financial impact unconfirmed.'),
+        ('Synthetic scenario: no revenue figures, lost-sales or business impact is asserted.' if is_synthetic(row) else (('Modeled' if financial['revenue_evidence_type'] == 'modeled' else 'Recorded') + ' revenue: $' + format(financial['purchase_revenue_usd'], ',.0f') + ' USD; baseline variance not confirmed lost sales.') if financial else 'Model text requires factual review. Root cause and financial impact unconfirmed.'),
     ]
     for i, msg in enumerate(details):
         text(pdf, margin+14, 132-i*16, f'• {msg}' if False else '- '+msg, size=7.7, fill=MUTED)

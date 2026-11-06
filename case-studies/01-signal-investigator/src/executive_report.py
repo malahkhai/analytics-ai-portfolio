@@ -30,8 +30,8 @@ def short_summary(row: dict, max_chars: int = 660) -> str:
             break
         collected.append(sentence)
     if collected:
-        return " ".join(collected) + " [Excerpt — full assessment in appendix]"
-    return text[: max_chars - 1].rsplit(" ", 1)[0] + "… [Excerpt]"
+        return " ".join(collected)
+    return text[: max_chars - 1].rsplit(" ", 1)[0] + "…"
 
 
 

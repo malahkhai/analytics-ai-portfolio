@@ -50,6 +50,27 @@ def build_reporting_rows(diagnostics, ai_report):
                 f"AI source evidence mismatch: {field}"
             )
 
+    # Verify that Gemini used the same financial evidence
+    # produced by our Python diagnostics.
+    financial_fields = (
+        "purchase_revenue_usd",
+        "baseline_revenue_usd",
+        "revenue_difference_usd",
+        "revenue_change_pct",
+        "revenue_evidence_type",
+        "purchase_events_with_revenue",
+    )
+
+    for field in financial_fields:
+        if field in original or field in ai_evidence:
+            if (
+                (field in original) != (field in ai_evidence)
+                or original.get(field) != ai_evidence.get(field)
+            ):
+                raise ValueError(
+                    f"AI financial evidence mismatch: {field}"
+                )
+
     interpretation = ai_report["ai_interpretation"]
     validation = ai_report["validation"]
 
@@ -84,6 +105,27 @@ def build_reporting_rows(diagnostics, ai_report):
             "alert_status": item["status"],
             "alert_types": item["alert_types"],
             "has_ai_investigation": has_ai,
+
+            # Financial evidence from the existing investigation.
+            "purchase_revenue_usd": item.get(
+                "purchase_revenue_usd"
+            ),
+            "baseline_revenue_usd": item.get(
+                "baseline_revenue_usd"
+            ),
+            "revenue_difference_usd": item.get(
+                "revenue_difference_usd"
+            ),
+            "revenue_change_pct": item.get(
+                "revenue_change_pct"
+            ),
+            "revenue_evidence_type": item.get(
+                "revenue_evidence_type"
+            ),
+            "purchase_events_with_revenue": item.get(
+                "purchase_events_with_revenue"
+            ),
+
             "executive_summary": (
                 interpretation["executive_summary"]
                 if has_ai else None
