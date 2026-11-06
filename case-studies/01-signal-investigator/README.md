@@ -1,6 +1,6 @@
 # Signal Investigator
 
-## Maxim — AI Performance Investigation Agent
+## Maxim — AI Analytics Investigation Agent
 
 **Status:** Working portfolio case study · Stakeholder interface deployed on Streamlit Community Cloud
 
