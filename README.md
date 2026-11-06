@@ -6,7 +6,7 @@ My work brings together experience in digital performance, ecommerce analytics, 
 
 ## Featured case study
 
-### 01 · Signal Investigator — Maxim, AI Performance Investigation Agent
+### 01 · Signal Investigator — Maxim, AI Analytics Investigation Agent
 
 **Status:** Working case study · Executive reporting interface deployed
 
