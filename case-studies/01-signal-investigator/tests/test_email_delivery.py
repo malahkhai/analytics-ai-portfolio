@@ -58,3 +58,46 @@ class EmailTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SenderCacheTests(unittest.TestCase):
+    class App:
+        def __init__(self, username="akinola.tunde@outlook.com", token="owner-token"):
+            self.username, self.token = username, token
+            self.calls = []
+        def get_accounts(self):
+            return [{"username": self.username}]
+        def acquire_token_silent(self, scopes, account):
+            self.calls.append((scopes, account))
+            return {"access_token": self.token} if self.token else None
+
+    def sender(self, app=None):
+        from src.email_delivery import OutlookSender
+        return OutlookSender("client-id", "owner-cache", app=app or self.App(), clock=lambda: 1000)
+
+    def test_visitor_does_not_need_microsoft_login(self):
+        app = self.App()
+        http = FakeHttp()
+        self.assertTrue(self.sender(app).send("visitor@example.com", "Report", "Evidence", http_client=http))
+        self.assertEqual(len(app.calls), 1)
+        self.assertEqual(len(http.posts), 1)
+        self.assertEqual(http.posts[0][1]["json"]["message"]["body"]["content"], "Evidence")
+
+    def test_wrong_owner_cache_never_sends(self):
+        http = FakeHttp()
+        with self.assertRaises(PermissionError):
+            self.sender(self.App(username="other@example.com")).send("visitor@example.com", "Report", "Evidence", http_client=http)
+        self.assertEqual(http.posts, [])
+
+    def test_expired_consent_never_sends(self):
+        http = FakeHttp()
+        with self.assertRaises(PermissionError):
+            self.sender(self.App(token=None)).send("visitor@example.com", "Report", "Evidence", http_client=http)
+        self.assertEqual(http.posts, [])
+
+    def test_shared_recipient_limit_blocks_duplicate_delivery(self):
+        sender, http = self.sender(), FakeHttp()
+        sender.send("visitor@example.com", "Report", "Evidence", http_client=http)
+        with self.assertRaises(ValueError):
+            sender.send("VISITOR@example.com", "Report", "Evidence", http_client=http)
+        self.assertEqual(len(http.posts), 1)

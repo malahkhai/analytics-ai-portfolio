@@ -1,4 +1,4 @@
-"""Keep Maxim's two-page executive PDF readable as Gemini summaries evolve."""
+"""Keep the paginated PDF complete and readable as Gemini summaries evolve."""
 from io import BytesIO
 import unittest
 
@@ -39,15 +39,17 @@ class PdfBriefNoExcerptTests(unittest.TestCase):
 
     def test_historical_yellow_summary_is_complete_no_excerpt(self):
         pdf, text = self.report('yellow')
-        self.assertEqual(len(pdf.pages), 2)
+        self.assertGreaterEqual(len(pdf.pages), 3)
         self.assertNotIn('[excerpt]', text.lower())
         self.assertIn('Recorded revenue was $8,472.00', text)
         self.assertIn('$+1,554.00', text)
         self.assertIn('recommended next step', text.lower())
+        self.assertEqual(text.count('Investigate channels, devices, funnel health, and inventory before drawing conclusions.'), 5)
+        self.assertIn('Page 1 /', text)
 
     def test_modeled_red_is_not_reported_as_observed_revenue(self):
         pdf, text = self.report('red')
-        self.assertEqual(len(pdf.pages), 2)
+        self.assertGreaterEqual(len(pdf.pages), 3)
         self.assertNotIn('[excerpt]', text.lower())
         self.assertIn('Modeled revenue was $5,213.54', text)
         self.assertIn('$-1,704.46', text)

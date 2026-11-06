@@ -42,3 +42,8 @@ dbt_packages/
 dbt_internal_packages/
 query_log.sql
 .user.yml
+
+# Owner-only Outlook connection and Streamlit secrets
+.streamlit/secrets.toml
+.streamlit/outlook-secrets.toml
+.outlook-token-cache.json

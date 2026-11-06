@@ -40,8 +40,7 @@ from src.executive_report import (
 from src.executive_pdf import generate_pdf
 from src.financial_evidence import reporting_financial_evidence
 from src.email_delivery import (
-    EXPECTED_SENDER, compose_sample, validate_recipient, begin_outlook_sign_in,
-    complete_outlook_sign_in, send_graph_email,
+    EXPECTED_SENDER, compose_sample, validate_recipient, OutlookSender,
 )
 from src.report_filters import (reporting_windows, rows_for_window, selectable_investigations, investigation_option)
 from src.ga4_reporting_adapter import build_reporting_rows
@@ -62,151 +61,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-CSS = r"""
-<style>
-/* Reference: white executive report cards against soft stone, elegant display titles. */
-:root {
-  --paper: #f4f5f7; --ink: #171e2d; --muted: #647084;
-  --border: #e3e6eb; --navy: #111827; --accent: #be5219;
-  --green: #23834e; --yellow: #a36c08; --red: #bd4317;
-}
-html,body,[data-testid="stApp"],[data-testid="stAppViewContainer"]{background:var(--paper);}
-header[data-testid="stHeader"]{background:var(--paper);}
-#MainMenu,footer{visibility:hidden;}
-.block-container{max-width:1480px;padding:5rem 2.8rem 3.5rem;}
-[data-testid="stSidebar"]{display:none;}
-[data-testid="stMarkdownContainer"]{overflow-wrap:anywhere;}
-h1,h2,h3{letter-spacing:-.02em;color:var(--ink);}
-h1,h2{font-family:Georgia,'Times New Roman',serif;}
-[data-testid="stDownloadButton"] button{
-  background:#fff;border:1px solid #d9dde4;color:var(--ink);border-radius:7px;
-  font-weight:650;font-size:.85rem;padding:.35rem .75rem;
-}
-[data-testid="stDownloadButton"] button:hover{border-color:#75849a;color:#111827;}
-.sr-appbar{display:flex;align-items:center;gap:12px;margin:0 0 12px;min-height:38px;}
-.sr-icon{width:31px;height:31px;border-radius:7px;display:flex;align-items:center;
-  justify-content:center;color:#fff;background:#121a29;font-weight:800;font-size:18px;}
-.sr-brand{font-size:.94rem;font-weight:780;color:#202637;line-height:1.15;}
-.sr-brand-sub{font-size:.73rem;color:#7b8594;}
-.sr-demo{font-size:.7rem;color:#7a8491;background:#ebedf1;border:1px solid #dfe3e9;
-  border-radius:99px;padding:6px 10px;display:inline-block;}
-/* All controls live inside the same report surface. No scrollable date strip. */
-.st-key-sr-report-head{
-  background:#fff;border:1px solid #e1e5ea;border-radius:10px;
-  padding:19px 20px 14px;margin:2px 0 17px;
-  box-shadow:0 1px 2px rgba(15,23,42,.015);
-}
-.st-key-sr-report-head [data-testid="stWidgetLabel"] p {
-  font-size:.7rem!important;font-weight:800!important;letter-spacing:.07em;
-  text-transform:uppercase;color:#647084!important;
-}
-.st-key-sr-report-head [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-  min-height:46px;background:#f4f5f7;border:1px solid #edf0f3;border-radius:8px;
-}
-.st-key-sr-report-head [data-testid="stSelectbox"] div[data-baseweb="select"] {width:100%;}
-.sr-meta-static{height:77px;background:#f4f5f7;border-radius:8px;padding:10px 13px;
-  display:flex;flex-direction:column;justify-content:center;min-width:0;}
-.sr-meta-static .sr-meta-val{font-size:.81rem;line-height:1.4;overflow-wrap:break-word;}
-.sr-hero-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);
-  align-items:stretch;gap:16px;margin:0 0 16px;}
-.sr-hero-grid .sr-card{margin:0;height:100%;min-width:0;}
-.sr-hero-grid .sr-decision{margin:0;height:100%;min-width:0;}
-.sr-kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:11px;margin:0 0 15px;}
-.sr-hyp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:8px 0 16px;}
-.sr-hyp-card{height:100%;display:flex;flex-direction:column;box-sizing:border-box;}
-.sr-hyp-footer{margin-top:auto;padding-top:15px;border-top:1px solid #eceff3;}
-.sr-role{font-size:.73rem;font-weight:750;color:#25324a;margin-top:4px;}
-.sr-table-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;
-  padding:7px 18px 5px;overflow-x:auto;margin-bottom:16px;}
-.sr-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.82rem;color:#273143;}
-.sr-table th{padding:12px 8px;border-bottom:1px solid #e6e9ee;text-align:left;
-  color:#727f90;font-size:.66rem;font-weight:800;letter-spacing:.06em;}
-.sr-table td{padding:14px 8px;border-bottom:1px solid #e6e9ee;vertical-align:top;overflow-wrap:anywhere;line-height:1.45;}
-.sr-table tr:last-child td{border-bottom:none;}
-.sr-priority{color:#a95316;font-size:.75rem;font-weight:800;}
-.sr-assignment{color:#697587;font-size:.7rem;}
-/* Financial evidence is a separate validated card, not a revenue loss claim. */
-.sr-finance{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;
-  background:#ffffff;border:1px solid #e1e5ea;border-radius:11px;padding:17px 22px;margin:0 0 18px;
-  align-items:stretch;box-sizing:border-box;}
-.sr-finance-cell{border-right:1px solid #e7eaf0;padding-right:14px;min-width:0;}
-.sr-finance-cell:last-of-type{border-right:none;}
-.sr-finance-number{font-size:1.42rem;font-weight:800;color:#151d2b;}
-.sr-finance-detail{font-size:.78rem;color:#5c6779;line-height:1.5;}
-@media(max-width:760px){.sr-finance{grid-template-columns:1fr;}.sr-finance-cell{border-right:none;border-bottom:1px solid #e7eaf0;padding-bottom:10px;}}
-/* Report cards */
-.sr-card{background:#fff;border:1px solid var(--border);border-radius:11px;padding:19px 22px;margin:0 0 14px;}
-.sr-kicker{font-size:.68rem;font-weight:800;color:#747f8e;letter-spacing:.095em;text-transform:uppercase;}
-.sr-title{font-family:Georgia,'Times New Roman',serif;font-size:clamp(1.45rem,2.5vw,2.3rem);
-  font-weight:750;color:#171d2b;margin:6px 0 11px;line-height:1.18;letter-spacing:-.036em;
-  max-width:850px;}
-.sr-report-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
-.sr-subtitle{font-size:.81rem;color:#7b8592;margin-top:-6px;}
-.sr-status{display:inline-block;border-radius:99px;padding:6px 11px;font-size:.75rem;font-weight:780;white-space:nowrap;}
-.sr-status-green{background:#e3f5e9;color:#196c40;}.sr-status-yellow{background:#ffedc7;color:#885b05;}
-.sr-status-red{background:#fce2db;color:#9f3718;}.sr-status-unknown{background:#e9edf2;color:#525e70;}
-.sr-meta-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:9px;}
-.sr-meta{padding:11px 13px;background:#f4f5f7;border-radius:8px;min-width:0;}
-.sr-meta--watch{background:#fff0e6;}
-.sr-meta-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:#758092;font-weight:780;}
-.sr-meta-val{font-size:.88rem;font-weight:700;color:#283142;margin-top:4px;}
-.sr-note{font-size:.77rem;color:#697587;margin:11px 0 0;}
-.sr-block-title{font-family:Georgia,'Times New Roman',serif;color:#1e2430;font-weight:750;
-  font-size:1.33rem;margin:1.0rem 0 .62rem;}
-.sr-micro{font-size:.72rem;color:#788292;}
-.sr-persona{display:flex;align-items:center;gap:10px;margin:2px 0 13px;}
-.sr-persona-name{font-weight:790;font-size:.92rem;color:#1b2638;}
-.sr-persona-job{font-size:.72rem;color:#6e7c8d;}
-.sr-summary-body{font-family:Georgia,'Times New Roman',serif;font-size:1.03rem;line-height:1.58;color:#1a2232;}
-.sr-review{font-size:.75rem;color:#7a8493;border-top:1px solid #e8ebef;padding-top:11px;margin-top:13px;}
-.sr-decision{background:#111827;color:#fff;border-radius:11px;padding:22px 23px;height:100%;min-height:280px;}
-.sr-decision-title{font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;color:#bfc7d7;font-weight:800;}
-.sr-decision-action{font-family:Georgia,'Times New Roman',serif;font-size:1.27rem;line-height:1.35;
-  color:white;margin:13px 0 16px;font-weight:700;}
-.sr-decision-line{display:flex;justify-content:space-between;gap:10px;padding:9px 0;
-  border-top:1px solid #3b4352;font-size:.76rem;color:#d7dce5;}
-.sr-decision-line strong{color:#fff;font-weight:700;text-align:right;}
-.sr-reco-note{font-size:.75rem;color:#aebacc;line-height:1.5;margin-top:9px;}
-.sr-kpi{border:1px solid #e1e4e9;background:#fff;border-radius:10px;padding:13px 13px 10px;min-height:174px;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;}
-.sr-kpi-watch{border-color:#f2cda9;}.sr-kpi-red{border-color:#e7a29a;}
-.sr-kpi-label{font-size:.77rem;color:#464f5e;margin:0 0 5px;min-height:35px;}
-.sr-kpi-number{font-size:clamp(1.1rem,2vw,1.5rem);font-weight:820;color:#1d2635;letter-spacing:-.025em;}
-.sr-kpi-change{font-size:.73rem;color:#6d7788;min-height:25px;margin-top:3px;}
-.sr-kpi-footer{display:flex;justify-content:space-between;align-items:center;margin-top:auto;}
-.sr-kpi-tag{font-size:.62rem;border-radius:99px;background:#f1f3f6;color:#647083;padding:3px 7px;}
-.sr-kpi-watch .sr-kpi-tag{background:#fff0dc;color:#895b09;}
-.sr-spark{width:100%;height:26px;margin-top:3px;}
-.sr-signal-wrap{background:#fff;border:1px solid #f0d4c2;border-radius:10px;overflow:hidden;margin:5px 0 12px;}
-.sr-signal-wrap.sr-signal-red{border-color:#e8b0ae;}
-.sr-signal-wrap.sr-signal-red .sr-signal-band{background:#fff0ee;}
-.sr-signal-wrap.sr-signal-red .sr-signal-caption{color:#b42318;}
-.sr-signal-band{background:#fff0e5;padding:15px 20px;display:flex;align-items:flex-start;
-  justify-content:space-between;gap:10px;}
-.sr-signal-title{font-family:Georgia,'Times New Roman',serif;font-size:1.3rem;color:#202537;font-weight:750;margin:5px 0 0;}
-.sr-signal-caption{font-size:.75rem;color:#a34e20;font-weight:760;letter-spacing:.07em;text-transform:uppercase;}
-.sr-signal-copy{font-size:.84rem;line-height:1.58;color:#384356;}
-.sr-signal-body{padding:18px 20px 16px;}
-.sr-hyp-card{border:1px solid #e2e5e9;border-radius:9px;padding:17px;background:#fff;min-height:252px;}
-.sr-hyp-number{font-size:.69rem;letter-spacing:.05em;color:#6c7585;font-weight:780;}
-.sr-hyp-title{font-size:.92rem;font-weight:780;color:#202938;margin:9px 0;line-height:1.35;}
-.sr-hyp-detail{font-size:.77rem;color:#535e6e;line-height:1.5;}
-.sr-unverified{background:#f2f4f6;border-radius:99px;font-size:.64rem;color:#68778a;padding:4px 7px;}
-.sr-quiet{font-size:.82rem;color:#6c798b;line-height:1.6;}
-.sr-footer{font-size:.72rem;color:#7c8795;margin:1.2rem 0;}
-[data-testid="stDataFrame"]{border-radius:8px;overflow:hidden;}
-[data-testid="stExpander"]{background:#fff;border:1px solid #e1e5eb;border-radius:9px;}
-@media(max-width:850px){
- .block-container{padding:5rem .9rem 2rem;}.si-day{min-width:83px;flex-basis:83px;}
- .sr-card{padding:15px;}.sr-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
- .sr-hero-grid{grid-template-columns:1fr;}.sr-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
- .sr-hyp-grid{grid-template-columns:1fr;}.sr-report-header{flex-wrap:wrap;}
-}
-@media(max-width:600px){
- .sr-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
- .sr-kpi{min-height:160px;}.st-key-sr-report-head{padding:15px 12px;}
-}
-</style>
-"""
+CSS = "<style>" + (ROOT / "assets" / "executive-report.css").read_text() + "</style>"
 st.markdown(CSS, unsafe_allow_html=True)
 
 
@@ -283,6 +138,17 @@ def get_layout(rows: list[dict], selected: dict) -> tuple[dict, str]:
     return fallback_spec(selected), "Default evidence layout"
 
 
+def headline_html(row: dict) -> str:
+    text = escape(executive_headline(row))
+    if severity(row) in ("yellow", "red") and row["purchase_rate_change_pct"] < 0:
+        value = f'{abs(row["purchase_rate_change_pct"]):.1f}%'
+        text = text.replace(value, f'<span class="sr-rate">{value}</span>', 1)
+        value = f'{abs(row["session_change_pct"]):.1f}%'
+        prefix, separator, suffix = text.partition(" as traffic ")
+        text = prefix + separator + suffix.replace(value, f'<span class="sr-traffic">{value}</span>', 1)
+    return text
+
+
 def percent_signed(num: object) -> str:
     return f"{num:+.1f}%" if isinstance(num, (int, float)) else "Unavailable"
 
@@ -324,11 +190,11 @@ def kpi_html(item: dict, rows: list[dict], selected: dict, priority: set[str]) -
     css = ("sr-kpi-red" if kind == "red" else "sr-kpi-watch") if caution else ""
     indicator = ("Alert" if kind == "red" else "Watch") if caution else ("Priority" if focus else "Context")
     return (
-        f'<div class="sr-kpi {css}">'
+        f'<div class="sr-kpi {css} {"sr-kpi-priority" if focus and not caution else ""}">'
         f'<div class="sr-kpi-label">{escape(item["title"])}</div>'
         f'<div class="sr-kpi-number">{escape(item["value"])}</div>'
         f'<div class="sr-kpi-change">{escape(item["delta"])}</div>'
-        + mini_sparkline(rows, chart_field, "#c16a25" if caution else "#42556f")
+        + mini_sparkline(rows, chart_field, "#B54708" if caution else "#1D4FBF" if focus else "#8A94A6")
         + f'<div class="sr-kpi-footer"><span class="sr-kpi-tag">{indicator}</span></div></div>'
     )
 
@@ -383,64 +249,48 @@ def _email_configuration(key: str) -> str:
         return ""
 
 
+@st.cache_resource(show_spinner=False)
+def configured_sender(client_id: str, cache_fingerprint: str, _token_cache: str) -> OutlookSender:
+    # Cache identity includes a digest so secret rotation replaces the resource.
+    return OutlookSender(client_id, _token_cache)
+
+
 @st.dialog("Email Maxim's investigation")
 def sample_email_dialog(selected: dict, active_rows: list[dict]):
-    """Recipient popup. Mail only transmits after Outlook OAuth + click."""
+    """The owner connects Outlook once; visitors only request their report."""
     finance = reporting_financial_evidence(selected)
-    subject, body = compose_sample(selected, short_summary(selected, 650), finance)
-    st.caption("Case-study report preview · sender requires Outlook authorization")
-    recipient = st.text_input("Recipient email", placeholder="stakeholder@example.com", key="maxim_recipient")
-    st.text_input("Subject", value=subject, disabled=True)
-    st.text_area("Email preview", body, height=270, disabled=True)
-    st.download_button("Download email draft", data=f"From: {EXPECTED_SENDER}\nTo: {recipient}\nSubject: {subject}\n\n{body}",
-                       file_name=f"maxim-sample-{selected['investigation_date']}.txt", mime="text/plain")
-    enabled = _email_configuration("MAXIM_EMAIL_ENABLED") == "1"
-    client_id = _email_configuration("MICROSOFT_CLIENT_ID")
-    if not enabled or not client_id:
-        st.info(
-            f"Sending from {EXPECTED_SENDER} is not connected yet. "
-            "The popup and draft are ready; enable Microsoft Graph delegated Mail.Send "
-            "and authenticate the sender before using live Send."
-        )
-        return
-    if "maxim_oauth_token" not in st.session_state:
-        if st.button("Connect Outlook sender", key="maxim_oauth_start"):
-            try:
-                app, flow = begin_outlook_sign_in(client_id)
-                st.session_state["maxim_oauth_app"] = app
-                st.session_state["maxim_oauth_flow"] = flow
-            except Exception as exc:
-                st.error(f"Could not start Outlook sign-in: {exc}")
-        flow = st.session_state.get("maxim_oauth_flow")
-        if flow:
-            st.info(f"Open {flow.get('verification_uri', 'https://microsoft.com/devicelogin')} and enter the code: {flow['user_code']}")
-            if st.button("I've completed Microsoft sign-in", key="maxim_oauth_finish"):
-                try:
-                    with st.spinner("Verifying authorized sender…"):
-                        st.session_state["maxim_oauth_token"] = complete_outlook_sign_in(
-                            st.session_state["maxim_oauth_app"], flow
-                        )
-                    st.success(f"Connected to {EXPECTED_SENDER}")
-                except Exception as exc:
-                    st.error(f"Sign-in was not completed: {exc}")
-    if st.session_state.get("maxim_oauth_token"):
-        st.success(f"Sending account verified: {EXPECTED_SENDER}")
+    subject, body = compose_sample(selected, short_summary(selected, 10000), finance)
+    st.caption("Receive Maxim’s investigation in your inbox")
+    with st.form("maxim_email_request"):
+        recipient = st.text_input("Recipient email", placeholder="you@example.com", key="maxim_recipient")
+        st.text_input("Subject", value=subject, disabled=True)
+        st.text_area("Email preview", body, height=270, disabled=True)
+        submitted = st.form_submit_button("Send report to my email", type="primary", width="stretch")
+    if submitted:
         try:
             recipient = validate_recipient(recipient)
-        except ValueError:
-            st.caption("Enter one valid recipient email to enable sending.")
-            return
-        last_sent = st.session_state.get("maxim_sent_time", 0)
-        cooldown = time.monotonic() - last_sent < 30
-        if st.button("Send sample email", disabled=cooldown, type="primary", key="maxim_send_sample"):
-            try:
-                send_graph_email(st.session_state["maxim_oauth_token"], recipient, subject, body)
-                st.session_state["maxim_sent_time"] = time.monotonic()
-                st.success("Microsoft Graph accepted the email for sending. Check the recipient inbox and Sent Items.")
-            except Exception as exc:
-                st.error(f"Email was not accepted: {exc}")
-        if cooldown:
-            st.caption("Test-send cooldown: 30 seconds between messages.")
+            enabled = _email_configuration("MAXIM_EMAIL_ENABLED") == "1"
+            client_id = _email_configuration("MICROSOFT_CLIENT_ID")
+            token_cache = _email_configuration("MICROSOFT_TOKEN_CACHE")
+            if not enabled or not client_id or not token_cache:
+                st.info("Email delivery is being connected. You can download the report or email draft below.")
+            else:
+                import hashlib
+                # Include cache fingerprint in the non-secret key; exclude raw cache from hashing/logs.
+                sender = configured_sender(client_id, hashlib.sha256(token_cache.encode()).hexdigest(), token_cache)
+                with st.spinner("Sending your investigation…"):
+                    sender.send(recipient, subject, body)
+                st.success("Your report has been accepted for sending. Please check your inbox and junk folder.")
+        except ValueError as exc:
+            st.warning(str(exc))
+        except PermissionError:
+            st.info("The sender connection needs attention from the dashboard owner. Please download the report for now.")
+        except Exception:
+            st.error("The email could not be sent. Please try again later or download the report.")
+    st.download_button(
+        "Download email draft", data=f"From: {EXPECTED_SENDER}\nTo: {recipient}\nSubject: {subject}\n\n{body}",
+        file_name=f"maxim-report-{selected['investigation_date']}.txt", mime="text/plain",
+    )
 
 
 # The app renders only reporting records generated by the existing BigQuery →
@@ -547,7 +397,7 @@ headline_str = executive_headline(selected)
 with heading_slot:
     st.markdown(
         f'<div class="sr-report-header"><div><div class="sr-kicker">EXECUTIVE INVESTIGATION REPORT</div>'
-        f'<div class="sr-title">{escape(headline_str)}</div>'
+        f'<div class="sr-title">{headline_html(selected)}</div>'
         f'<div class="sr-subtitle">{escape(selected_label)} · Ecommerce conversion investigation</div></div>'
         f'<div style="text-align:right"><span class="sr-status sr-status-{status}">{escape(status_title)}</span>'
         f'<div class="sr-micro" style="margin-top:7px">{counts["red"]} alerts · '
@@ -568,14 +418,10 @@ finance = reporting_financial_evidence(selected)
 with pdf_slot:
     st.download_button(
         "Export PDF", data=generate_pdf(selected, active_rows, finance),
-        file_name=f"signal-investigator-{selected_date}.pdf", mime="application/pdf", width="stretch",
+        file_name=f"signal-investigator-{selected_date}.pdf", mime="application/pdf", width="stretch", key="pdf-export",
     )
 
 # Same-height, shared-grid hero cards prevent uneven borders on desktop.
-avatar_uri = (
-    "data:image/svg+xml;base64," + __import__("base64").b64encode(AVATAR.read_bytes()).decode("ascii")
-    if AVATAR.is_file() else AVATAR_URL
-)
 advice = decision(selected)
 finance_status = (
     f"{'Modeled' if finance['revenue_evidence_type'] == 'modeled' else 'Recorded'}: "
@@ -593,13 +439,13 @@ st.markdown(
     '<div class="sr-hero-grid">'
     '<section class="sr-card">'
     '<div class="sr-kicker">MAXIM · EXECUTIVE ASSESSMENT</div>'
-    f'<div class="sr-persona"><img src="{escape(avatar_uri, quote=True)}" '
-    'width="49" height="49" alt="Maxim AI analyst avatar" '
-    'style="border-radius:100%;background:#e8edf4;border:2px solid #e8edf4" />'
+    '<div class="sr-persona"><div class="sr-avatar" aria-hidden="true">M</div>'
     '<div><div class="sr-persona-name">Maxim</div>'
     '<div class="sr-persona-job">AI Performance Investigation Analyst</div></div></div>'
-    f'<div class="sr-summary-body">{escape(short_summary(selected, 650))}</div>'
-    f'<div class="sr-review">{escape(review_label)} · Potential causes remain unverified</div>'
+    f'<div class="sr-summary-body">{escape(short_summary(selected, 10000))}</div>'
+    f'<div class="sr-review"><span>{"AI-generated" if selected.get("has_ai_investigation") else "Rule-based brief"}</span>'
+    f'<span>{escape(review_label.replace("AI-generated · ", ""))}</span>'
+    '<span>Potential causes remain unverified</span></div>'
     '</section>'
     '<section class="sr-decision">'
     '<div class="sr-decision-title">RECOMMENDED NEXT INVESTIGATION</div>'
@@ -609,6 +455,7 @@ st.markdown(
     f'<div class="sr-decision-line"><span>Revenue comparison</span><strong>{escape(finance_status)}</strong></div>'
     '<div class="sr-decision-line"><span>Finding status</span><strong>Requires validation</strong></div>'
     f'<div class="sr-reco-note">{escape(advice["why"])}</div>'
+    '<a class="sr-decision-link" href="#recommendations">See all proposed investigations ↗</a>'
     '<div class="sr-reco-note">*Illustrative responsibility, not a real assignment.</div>'
     '</section></div>',
     unsafe_allow_html=True,
@@ -670,6 +517,7 @@ else:
 # Six cards, ordered and styled to mirror the reference's executive KPI block.
 st.markdown('<div class="sr-block-title">Key metrics</div>', unsafe_allow_html=True)
 st.caption("Selected date vs four prior matching weekdays · Colors reflect alert/watch policy, not statistical significance")
+st.markdown('<div class="sr-kpi-legend"><span>Watch / Alert · follow-up signal</span><span>Priority · key movement</span><span>Context · baseline reference</span></div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="sr-kpi-grid">' + ''.join(
         kpi_html(metric, active_rows, selected, priority_metrics)
@@ -679,48 +527,49 @@ st.markdown(
 )
 
 # Primary evidence panel, led by the exact rule reason rather than invented cause.
-primary_chart = spec["charts"][0]
+primary_chart = "purchase_rate_vs_baseline"  # Reference layout: efficiency before traffic.
 status_caption = {
     "yellow": "WATCHLIST · FOLLOW UP ADVISED",
     "red": "DETECTOR ANOMALY · ACTION NEEDED",
     "green": "NO QUALIFYING ANOMALY",
     "unknown": "STATUS NEEDS VERIFICATION",
 }[status]
-st.markdown(
-    f'<section class="sr-signal-wrap sr-signal-{status}"><div class="sr-signal-band">'
-    '<div><div class="sr-signal-caption">'
-    f'{escape(status_caption)} · {escape(selected_label.upper())}'
-    '</div><div class="sr-signal-title">'
-    f'{escape(headline_str)}</div></div>'
-    f'<div><div class="sr-kicker" style="color:#ae571e;text-align:right">EST. PURCHASING-SESSION GAP</div>'
-    f'<div style="font-size:1.4rem;font-weight:800;color:#a64e1b;text-align:right">'
-    f'{selected["estimated_purchase_session_gap"]:.1f}</div></div>'
-    '</div></section>',
-    unsafe_allow_html=True,
-)
-st.caption("Estimated baseline gap is not orders, lost sales or revenue. A negative gap means performance above baseline.")
-small_col, big_col = st.columns([1, 2.15], gap="large", vertical_alignment="top")
-with small_col:
-    st.markdown("**WHAT HAPPENED**")
+with st.container(key="sr-primary-evidence"):
     st.markdown(
-        f"Sessions changed **{percent_signed(selected['session_change_pct'])}** versus "
-        f"the four-weekday baseline. The purchase-session rate was "
-        f"**{selected['observed_purchase_rate_pct']:.2f}%**, a relative change of "
-        f"**{percent_signed(selected['purchase_rate_change_pct'])}**."
+        f'<section class="sr-signal-wrap sr-signal-{status}"><div class="sr-signal-band">'
+        '<div><div class="sr-signal-caption">'
+        f'{escape(status_caption)} · {escape(selected_label.upper())}'
+        '</div><div class="sr-signal-title">'
+        f'{escape(headline_str)}</div></div>'
+        f'<div><div class="sr-kicker" style="color:#ae571e;text-align:right">EST. PURCHASING-SESSION GAP</div>'
+        f'<div class="sr-gap-number">'
+        f'{selected["estimated_purchase_session_gap"]:.1f}</div></div>'
+        '</div></section>',
+        unsafe_allow_html=True,
     )
-    st.markdown("**DETECTOR DECISION**")
-    st.write(alert_reason(selected))
-    st.markdown("**EVIDENCE QUALITY**")
-    st.markdown(
-        "Selected GA4-derived aggregate metrics. Channel, device, funnel and financial attribution "
-        "have not been verified for this record."
+    st.caption("Estimated baseline gap is not orders, lost sales or revenue. A negative gap means performance above baseline.")
+    small_col, big_col = st.columns([1, 2.15], gap="large", vertical_alignment="top")
+    with small_col:
+        st.markdown("**WHAT HAPPENED**")
+        st.markdown(
+            f"Sessions changed **{percent_signed(selected['session_change_pct'])}** versus "
+            f"the four-weekday baseline. The purchase-session rate was "
+            f"**{selected['observed_purchase_rate_pct']:.2f}%**, a relative change of "
+            f"**{percent_signed(selected['purchase_rate_change_pct'])}**."
+        )
+        st.markdown("**DETECTOR DECISION**")
+        st.write(alert_reason(selected))
+        st.markdown("**EVIDENCE QUALITY**")
+        st.markdown(
+            "Selected GA4-derived aggregate metrics. Channel, device, funnel and financial attribution "
+            "have not been verified for this record."
+        )
+    with big_col:
+        plot_evidence(primary_chart, active_rows, selected_date)
+    st.caption(
+        "Graph uses the selected case-study daily metrics and each date's average "
+        "of four previous matching weekdays. No confidence interval has been estimated."
     )
-with big_col:
-    plot_evidence(primary_chart, active_rows, selected_date)
-st.caption(
-    "Graph uses the selected case-study daily metrics and each date's average "
-    "of four previous matching weekdays. No confidence interval has been estimated."
-)
 
 # Page 2 of the reference: ranked hypothesis *cards*, without invented rankings.
 st.markdown('<div class="sr-block-title">Why it happened: hypotheses to validate</div>', unsafe_allow_html=True)
@@ -740,7 +589,8 @@ if hyp:
             f'<div class="sr-hyp-title">{escape(str(item.get("title", "Hypothesis")))}</div>'
             f'<div class="sr-hyp-detail">{escape(str(item.get("explanation", "")))}</div>'
             '<div class="sr-hyp-number" style="margin-top:12px">EVIDENCE NEEDED</div>'
-            f'<div class="sr-hyp-detail">{escape(", ".join(map(str, needed)) or "Not specified")}</div>'
+            '<ul class="sr-hyp-detail sr-evidence-list">'
+            + ''.join(f'<li>{escape(str(value))}</li>' for value in needed) + '</ul>'
             '<div class="sr-hyp-footer"><div class="sr-hyp-number">SUGGESTED INVESTIGATION LEAD*</div>'
             f'<div class="sr-role">{escape(lead)}</div></div></article>'
         )
@@ -750,52 +600,50 @@ else:
     st.info("No AI hypotheses exist for this date; only detector evidence is available.")
 
 # Decision-ready action register with illustrative roles and honest limitations.
-st.markdown('<div class="sr-block-title" id="recommendations">Recommendations</div>', unsafe_allow_html=True)
-st.caption("Proposed investigations, not approved business actions. Roles are illustrative and no owner has accepted an assignment.")
-checks = recommended_checks(selected) if selected.get("has_ai_investigation") else []
-if checks:
-    table_rows = []
-    for i, item in enumerate(checks, 1):
-        action = str(item.get("action", "Follow-up"))
-        role = suggested_owner_role(action)
-        table_rows.append(
-            '<tr>'
-            f'<td><span class="sr-priority">{i:02d} · Investigate</span></td>'
-            f'<td><strong>{escape(action)}</strong><div class="sr-quiet">{escape(str(item.get("purpose", "")))}</div></td>'
-            f'<td><strong>{escape(role)}</strong><div class="sr-assignment">Suggested role only</div></td>'
-            '<td>Not quantified</td><td>Proposed · review required</td></tr>'
+with st.container(key="sr-recommendations"):
+    st.markdown('<div class="sr-block-title" id="recommendations">Recommendations</div>', unsafe_allow_html=True)
+    st.caption("Proposed investigations, not approved business actions. Roles are illustrative and no owner has accepted an assignment.")
+    checks = recommended_checks(selected) if selected.get("has_ai_investigation") else []
+    if checks:
+        table_rows = []
+        for i, item in enumerate(checks, 1):
+            action = str(item.get("action", "Follow-up"))
+            role = suggested_owner_role(action)
+            table_rows.append(
+                '<tr>'
+                f'<td><span class="sr-priority">{i:02d} · Investigate</span></td>'
+                f'<td><strong>{escape(action)}</strong><div class="sr-quiet">{escape(str(item.get("purpose", "")))}</div></td>'
+                f'<td><strong>{escape(role)}</strong><div class="sr-assignment">Suggested role only</div></td>'
+                '<td>Not quantified</td><td>Proposed · review required</td></tr>'
+            )
+        st.markdown(
+            '<div class="sr-table-wrap"><table class="sr-table">'
+            '<colgroup><col style="width:13%"><col style="width:40%"><col style="width:20%">'
+            '<col style="width:12%"><col style="width:15%"></colgroup>'
+            '<thead><tr><th>PRIORITY</th><th>ACTION / PURPOSE</th><th>SUGGESTED OWNER*</th>'
+            '<th>IMPACT</th><th>STATUS</th></tr></thead><tbody>'
+            + ''.join(table_rows) + '</tbody></table></div>',
+            unsafe_allow_html=True,
         )
-    st.markdown(
-        '<div class="sr-table-wrap"><table class="sr-table">'
-        '<colgroup><col style="width:13%"><col style="width:40%"><col style="width:20%">'
-        '<col style="width:12%"><col style="width:15%"></colgroup>'
-        '<thead><tr><th>PRIORITY</th><th>ACTION / PURPOSE</th><th>SUGGESTED OWNER*</th>'
-        '<th>IMPACT</th><th>STATUS</th></tr></thead><tbody>'
-        + ''.join(table_rows) + '</tbody></table></div>',
-        unsafe_allow_html=True,
-    )
-else:
-    st.info(f"Suggested monitoring step: {advice['action']}. No AI action register is available.")
+    else:
+        st.info(f"Suggested monitoring step: {advice['action']}. No AI action register is available.")
 
 # Supporting evidence as on the second page of the reference. We can show
 # aggregate measures; absent channel/funnel breakdowns are never fabricated.
 st.markdown('<div class="sr-block-title">Where the performance change appears</div>', unsafe_allow_html=True)
 st.caption(f"Approved evidence views · {spec_source}.")
-supporting_charts = [c for c in spec["charts"] if c != primary_chart]
-if not supporting_charts:
-    supporting_charts = ["purchase_rate_vs_baseline" if primary_chart != "purchase_rate_vs_baseline" else "sessions_vs_baseline"]
-for start in range(0, len(supporting_charts), 2):
-    subset = supporting_charts[start:start+2]
-    for col, chart_name in zip(st.columns(len(subset), gap="large"), subset):
-        with col:
-            plot_evidence(chart_name, active_rows, selected_date)
-st.markdown(
-    '<div class="sr-card"><div class="sr-kicker">SEGMENTATION LIMITATION</div>'
-    '<p class="sr-quiet">Channel attribution, device mix and checkout-funnel data are not included in '
-    'this aggregated reporting dataset. A channel waterfall or funnel attribution chart will '
-    '<strong>only be generated after the corresponding evidence has been collected and validated</strong>.</p></div>',
-    unsafe_allow_html=True,
-)
+support_col, limitation_col = st.columns([2, 1], gap="large")
+with support_col:
+    with st.container(key="sr-support-chart"):
+        plot_evidence("sessions_vs_baseline", active_rows, selected_date)
+with limitation_col:
+    st.markdown(
+        '<div class="sr-card"><div class="sr-kicker">SEGMENTATION LIMITATION</div>'
+        '<p class="sr-quiet">Channel attribution, device mix and checkout-funnel data are not included in '
+        'this aggregated reporting dataset. A channel waterfall or funnel attribution chart will '
+        '<strong>only be generated after the corresponding evidence has been collected and validated</strong>.</p></div>',
+        unsafe_allow_html=True,
+    )
 
 # Third-page secondary signals: comparable ranking without pseudo-impact metrics.
 st.markdown('<div class="sr-block-title">Other signals in the reporting window</div>', unsafe_allow_html=True)
@@ -806,22 +654,30 @@ selected_sessions_rank = next(i for i, r in enumerate(session_ranked, 1) if r["i
 col_a, col_b = st.columns(2, gap="medium")
 with col_a:
     st.markdown(
-        '<div class="sr-card"><div class="sr-kicker">TRAFFIC MOVEMENT</div>'
+        '<div class="sr-card sr-rank"><div class="sr-kicker">TRAFFIC MOVEMENT</div>'
         '<div class="sr-block-title" style="margin:.4rem 0">Session growth ranking</div>'
-        f'<div style="font-size:1.7rem;font-weight:800">#{selected_sessions_rank} of {len(active_rows)}</div>'
+        f'<div class="sr-rank-number">#{selected_sessions_rank} of {len(active_rows)}</div>'
         f'<div class="sr-quiet">{escape(percent_signed(selected["session_change_pct"]))} versus '
         'the selected day’s matching-weekday baseline.</div></div>',
         unsafe_allow_html=True,
     )
 with col_b:
     st.markdown(
-        '<div class="sr-card"><div class="sr-kicker">PURCHASE PERFORMANCE</div>'
+        '<div class="sr-card sr-rank sr-rank-rate"><div class="sr-kicker">PURCHASE PERFORMANCE</div>'
         '<div class="sr-block-title" style="margin:.4rem 0">Rate decline ranking</div>'
-        f'<div style="font-size:1.7rem;font-weight:800">#{selected_rate_rank} of {len(active_rows)}</div>'
+        f'<div class="sr-rank-number">#{selected_rate_rank} of {len(active_rows)}</div>'
         f'<div class="sr-quiet">{escape(percent_signed(selected["purchase_rate_change_pct"]))} '
         'relative rate change. Rank is descriptive, not statistical evidence.</div></div>',
         unsafe_allow_html=True,
     )
+st.markdown(
+    '<div class="sr-date-strip">' + ''.join(
+        f'<div class="sr-day sr-day-{severity(day)}"><strong>{date.fromisoformat(day["investigation_date"]).strftime("%d %b")}</strong>'
+        f'<br><small>{escape({"red": "Alert", "yellow": "Watch", "green": "Normal", "unknown": "Verify"}[severity(day)])}</small>'
+        f'<br><strong>{percent_signed(day["purchase_rate_change_pct"])}</strong></div>'
+        for day in active_rows
+    ) + '</div>', unsafe_allow_html=True,
+)
 st.caption(
     f"Window classifications: {counts['red']} red alerts, {counts['yellow']} yellow watchlist dates, "
     f"{counts['green']} normal dates. Dates shown are the nine baseline-ready dates, not an exhaustive full period."
@@ -852,6 +708,6 @@ with st.expander("Appendix — methodology, source data and detector evidence", 
 st.markdown(
     '<div class="sr-footer">Signal Investigator · Historical public GA4 ecommerce sample · '
     'Maxim is an AI analyst persona, not a human analyst. This historical case study may contain modified demonstration data; it is not a live incident. '
-    'Avatar: Avataaars by Pablo Stanley via DiceBear.</div>',
+    '</div>',
     unsafe_allow_html=True,
 )

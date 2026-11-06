@@ -110,7 +110,7 @@ class TestInterviewRedAlert(unittest.TestCase):
         except ImportError:
             return
         reader = PdfReader(BytesIO(document))
-        self.assertEqual(len(reader.pages), 2)
+        self.assertGreaterEqual(len(reader.pages), 3)
         extracted = ' '.join(page.extract_text() or '' for page in reader.pages)
         self.assertIn('SYNTHETIC', extracted)
         self.assertNotIn('8,472', extracted)

@@ -70,7 +70,7 @@ The agent uses bounded tools including `get_ga4_diagnostic` and `compare_ga4_per
 
 The [live Streamlit report](https://maxim-signal-investigator.streamlit.app/?window=all&date=2020-12-07) shows the **historical yellow-watchlist investigation** from a version-controlled report snapshot (`demo_data/executive_report.json`). Visitors do not need BigQuery or Gemini credentials.
 
-The underlying investigation pipeline can be run separately with authenticated BigQuery and Gemini access. **The hosted viewer does not execute Gemini, refresh BigQuery automatically, or send live emails.** The email control generates a sample draft; sending from Outlook requires authorization that is not configured in the public app.
+The underlying investigation pipeline can be run separately with authenticated BigQuery and Gemini access. **The hosted viewer does not execute Gemini or refresh BigQuery automatically.** The email popup supports owner-connected Outlook delivery: visitors enter an address and request the report without signing into Microsoft. Live sending requires the owner-only hosting secrets described in [Outlook setup](docs/outlook-sender-setup.md); draft download remains available when the sender is not connected. PDF export produces a compact, paginated document with the complete selected assessment, proposed checks and measured evidence.
 
 ## Main components
 
@@ -90,7 +90,7 @@ The underlying investigation pipeline can be run separately with authenticated B
 | `demo_data/executive_report.json` | Version-controlled historical report for public viewing |
 | `tests/` | Automated validation and regression tests |
 
-**Testing:** 112 tests passed in the latest reported local run on 6 November 2026. This demonstrates local validation, not production readiness.
+**Testing:** 118 tests passed in the latest reported local run on 6 November 2026. This demonstrates local validation, not production readiness.
 
 ## Interpretation and limitations
 

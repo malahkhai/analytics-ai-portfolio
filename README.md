@@ -12,7 +12,7 @@ My work brings together experience in digital performance, ecommerce analytics, 
 
 **[Explore Maxim's live executive report](https://maxim-signal-investigator.streamlit.app/?window=all&date=2020-12-07)** · **[Read the Signal Investigator case study](case-studies/01-signal-investigator/)**
 
-**Maxim is the AI investigation agent.** It combines explainable Python anomaly detection, Gemini tool-assisted investigation, structured evidence validation, and prioritized analytical recommendations. **Streamlit is Maxim's stakeholder-facing reporting interface**, with PDF export and an email-draft preview.
+**Maxim is the AI investigation agent.** It combines explainable Python anomaly detection, Gemini tool-assisted investigation, structured evidence validation, and prioritized analytical recommendations. **Streamlit is Maxim's stakeholder-facing reporting interface**, with paginated PDF export and an email report popup. Outlook delivery requires owner authorization; draft preview remains available.
 
 **Implemented capabilities**
 
@@ -21,7 +21,7 @@ My work brings together experience in digital performance, ecommerce analytics, 
 - **AI investigation:** Gemini uses bounded analytical tools to evaluate evidence, propose hypotheses, and recommend checks without asserting unverified causes.
 - **Financial context:** Recorded revenue versus historical baseline, with separately identified modeled financial exposure for demonstration scenarios.
 - **Executive reporting:** A deployed Streamlit interface presenting findings, business implications, recommended actions, and exportable reports.
-- **Quality assurance:** 114 automated tests passed in the latest local verification (6 November 2026).
+- **Quality assurance:** 118 automated tests passed in the latest local verification (6 November 2026).
 
 **Case-study evidence:** On 7 December 2020, the historical sample showed a **14.5% relative decline in purchase-session rate** while traffic increased **42.0%**. Recorded sample revenue was **$8,472**, or **22.5% above** its four-Monday benchmark. Maxim classified the conversion change as a watchlist case, rather than a qualifying red alert.
 

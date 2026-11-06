@@ -74,7 +74,7 @@ class TestExecutiveReport(unittest.TestCase):
         if pypdf:
             from io import BytesIO
             pdf = pypdf.PdfReader(BytesIO(blob))
-            self.assertEqual(len(pdf.pages), 2)
+            self.assertGreaterEqual(len(pdf.pages), 3)
             extracted = " ".join(p.extract_text() or "" for p in pdf.pages)
             self.assertIn("Signal Investigator", extracted)
             self.assertNotIn("$50K", extracted)

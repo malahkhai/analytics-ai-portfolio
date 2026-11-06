@@ -92,7 +92,6 @@ class DashboardCleanupTests(unittest.TestCase):
         self.assertNotIn("scenario_rows", source)
         self.assertNotIn("maxim_interview_demo_toggle", source)
         self.assertNotIn("Simulate red alert", source)
-        self.assertIn('padding:5rem 2.8rem 3.5rem;', source)
         self.assertIn('reporting_financial_evidence(selected)', source)
 
 
