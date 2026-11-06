@@ -37,11 +37,12 @@ from src.executive_report import (
     short_summary,
     executive_headline, display_action_title,
 )
-from src.executive_pdf import generate_pdf
+from src.executive_pdf_report import generate_pdf
 from src.financial_evidence import reporting_financial_evidence
 from src.email_delivery import (
-    EXPECTED_SENDER, compose_sample, validate_recipient, OutlookSender,
+    EXPECTED_SENDER, compose_sample, validate_recipient,
 )
+from src.outlook_sender import OutlookSender
 from src.report_filters import (reporting_windows, rows_for_window, selectable_investigations, investigation_option)
 from src.ga4_reporting_adapter import build_reporting_rows
 

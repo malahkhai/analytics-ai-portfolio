@@ -72,7 +72,7 @@ class SenderCacheTests(unittest.TestCase):
             return {"access_token": self.token} if self.token else None
 
     def sender(self, app=None):
-        from src.email_delivery import OutlookSender
+        from src.outlook_sender import OutlookSender
         return OutlookSender("client-id", "owner-cache", app=app or self.App(), clock=lambda: 1000)
 
     def test_visitor_does_not_need_microsoft_login(self):
