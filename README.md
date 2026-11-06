@@ -1,59 +1,59 @@
 # Analytics & AI Agents Portfolio
 
+Practical case studies combining **digital analytics, business intelligence, and applied AI agents** to investigate business performance and support better decisions.
 
-**[Explore the Live Maxim AI Dashboard](https://maxim-signal-investigator.streamlit.app/?window=all&date=2020-12-07)**
+My work brings together experience in digital performance, ecommerce analytics, and stakeholder reporting with hands-on development of AI-assisted analytical workflows. Each project documents the business problem, data and methods, implemented capabilities, results, testing, and limitations.
 
-Practical case studies connecting **digital analytics, business intelligence, analytics engineering, and applied AI** to business decisions.
+## Featured case study
 
-My work combines digital performance and ecommerce analytics with hands-on development of data products. Each case study documents the business question, data model, working implementation, evaluation, and limitations—not just a dashboard screenshot.
+### 01 · Signal Investigator — Maxim, AI Performance Investigation Agent
 
-## Case studies
+**Status:** Working case study · Executive reporting interface deployed
 
-### 01 · Signal Investigator — AI-assisted ecommerce anomaly investigation
+**[Explore Maxim's live executive report](https://maxim-signal-investigator.streamlit.app/?window=all&date=2020-12-07)** · **[Read the Signal Investigator case study](case-studies/01-signal-investigator/)**
 
-**Status: Working case study; Streamlit publication in progress.**
+**Maxim is the AI investigation agent.** It combines explainable Python anomaly detection, Gemini tool-assisted investigation, structured evidence validation, and prioritized analytical recommendations. **Streamlit is Maxim's stakeholder-facing reporting interface**, with PDF export and an email-draft preview.
 
-Signal Investigator examines changes in ecommerce performance, applies explicit anomaly rules, and lets a Gemini agent investigate verified evidence using constrained analytical tools. **Maxim**, the stakeholder dashboard, presents the finding, supporting KPIs, hypotheses, recommended checks, and a PDF / email-preview experience.
+**Implemented capabilities**
 
-**Implemented:**
-- GA4 public ecommerce sample transformed in BigQuery with dbt
-- Python data adaptation, validation, weekday-baseline comparisons, and anomaly detection
-- Gemini tool-using and structured AI investigations with schema checks
-- Executive reporting adapter and Streamlit dashboard (Maxim)
-- One-command local interview demonstration against two selectable BigQuery tables
-- 110 passing automated tests in the latest local verification (5 November 2026)
+- **Ecommerce data modeling:** Public GA4 sample data transformed in BigQuery with dbt, including sessions, purchase activity, conversion rates, and revenue.
+- **Anomaly detection:** Validated daily metrics compared against four previous matching weekdays using explicit, testable thresholds.
+- **AI investigation:** Gemini uses bounded analytical tools to evaluate evidence, propose hypotheses, and recommend checks without asserting unverified causes.
+- **Financial context:** Recorded revenue versus historical baseline, with separately identified modeled financial exposure for demonstration scenarios.
+- **Executive reporting:** A deployed Streamlit interface presenting findings, business implications, recommended actions, and exportable reports.
+- **Quality assurance:** 114 automated tests passed in the latest local verification (6 November 2026).
 
-**Interview demonstration:** The authentic historical sample produces a yellow watchlist for 7 December 2020; a **separately modified copy** of the transformed daily metrics produces a red alert. The red case is a deliberate simulation, not a claim about real historical trading performance. The same Python detection and Gemini investigation path is used in both cases.
+**Case-study evidence:** On 7 December 2020, the historical sample showed a **14.5% relative decline in purchase-session rate** while traffic increased **42.0%**. Recorded sample revenue was **$8,472**, or **22.5% above** its four-Monday benchmark. Maxim classified the conversion change as a watchlist case, rather than a qualifying red alert.
 
-[Explore the Signal Investigator case study](case-studies/01-signal-investigator/)
+**Data integrity:** This project uses historical, obfuscated public GA4 data. A separate, deliberately modified dataset is used to test the red-alert investigation path; its revenue is **modeled**, not observed, and any shortfall is a scenario comparison—not confirmed lost sales. See the [case-study methodology](case-studies/01-signal-investigator/) for details.
 
-*Maxim live dashboard URL: to be added after deployment.*
+## Other planned case studies
 
 ### 02 · Marketing Performance & Budget Allocation Agent
 
-**Status: Planned.** Explore channel and campaign performance, budget allocation, and evidence-grounded optimization recommendations.
+**Status: Planned.** Investigate campaign and channel efficiency and support evidence-grounded budget allocation recommendations.
 
 ### 03 · Tracking Quality Assurance Agent
 
-**Status: Planned.** Detect implementation errors, unexpected event changes, and data quality problems in digital measurement.
+**Status: Planned.** Identify measurement implementation errors, event anomalies, missing parameters, and data-quality issues.
 
 ### 04 · Executive Analytics Copilot
 
-**Status: Planned.** Explore controlled, evidence-based business questions over trusted analytics datasets.
+**Status: Planned.** Explore controlled, evidence-based business questions over trusted analytical data.
 
-## Technical focus
+## Core capabilities and tools
 
-**Analytics:** GA4, SQL, digital measurement, ecommerce performance, conversion metrics, Power BI, Looker Studio.
-**Data engineering:** Python, BigQuery, dbt, source validation and data contracts.
-**Applied AI:** Gemini function calling, structured responses, evidence validation and human review.
-**Engineering practices:** Git, automated tests, reproducible analytical workflows, documented limitations and stakeholder-facing reporting.
+- **Analytics & business intelligence:** GA4, SQL, ecommerce analytics, conversion measurement, Looker Studio, Power BI.
+- **Data & modeling:** Python, BigQuery, dbt, data validation, metric definitions, reproducible analysis.
+- **Applied AI agents:** Gemini function calling, structured responses, evidence-grounded interpretation, human review.
+- **Delivery & quality:** Git/GitHub, automated testing, documentation, stakeholder reporting, Streamlit.
 
 ## Development principles
 
-1. Start with a concrete business question and explicitly defined metrics.
-2. Establish a deterministic analytical baseline before asking an LLM to interpret findings.
-3. Separate observed evidence from hypotheses, modelled gaps, and proposed actions.
-4. Use public or synthetic case-study data; never imply a simulated event is a real customer incident.
-5. Document what is implemented, what is manual, and what remains planned.
+1. Start with a clear business question and measurable definitions.
+2. Establish reliable analytical evidence before asking an AI agent to interpret it.
+3. Separate observed results, modeled scenarios, hypotheses, and proposed business actions.
+4. Use public or synthetic data transparently and document limitations.
+5. Demonstrate working capabilities and their business relevance without overstating production readiness.
 
-**Career focus:** Senior Manager / Lead roles at the intersection of Data, Analytics & AI.
+**Career focus:** Senior Manager / Lead — Data, Analytics & AI, connecting analytical leadership, business intelligence, and practical AI agents.
